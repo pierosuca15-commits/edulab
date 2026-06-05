@@ -1,0 +1,56 @@
+{
+  "id": "com.ingvirlab.app",
+  "name": "IngVirLab",
+  "short_name": "IngVirLab",
+  "description": "Laboratorio Virtual de Ingeniería",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d0f14",
+  "theme_color": "#6c63ff",
+  "orientation": "any",
+  "categories": ["education", "productivity"],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "screenshots": [
+    {
+      "src": "https://placehold.co/1280x720/0d0f14/6c63ff/png?text=IngVirLab",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "IngVirLab - Laboratorio Virtual"
+    },
+    {
+      "src": "https://placehold.co/390x844/0d0f14/6c63ff/png?text=IngVirLab",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "IngVirLab - Vista móvil"
+    }
+  ],
+  "icons": [
+    {
+      "src": "https://placehold.co/192x192/6c63ff/ffffff/png?text=IVL",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://placehold.co/192x192/6c63ff/ffffff/png?text=IVL",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "https://placehold.co/512x512/6c63ff/ffffff/png?text=IVL",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://placehold.co/512x512/6c63ff/ffffff/png?text=IVL",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
