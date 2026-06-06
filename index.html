@@ -1706,7 +1706,6 @@ window.guardarColorTopic=async()=>{
 let scannerAnalisis = null;
 let scannerImagenBase64 = null;
 
-let _scannerInitialized = false;
 window.renderScanner = function renderScanner(){
   const el = document.getElementById('scanner-content');
   const isAdmin = currentUser.role === 'admin';
@@ -1718,19 +1717,10 @@ window.renderScanner = function renderScanner(){
     cargarHistorialScanner();
   } else {
     setTimeout(()=>{
-      // Usar { once: true } para evitar acumulación de listeners al cambiar tabs
       const camara = document.getElementById('scanner-camara');
       const galeria = document.getElementById('scanner-galeria');
-      if(camara){
-        const newCam = camara.cloneNode(true);
-        camara.parentNode.replaceChild(newCam, camara);
-        newCam.addEventListener('change', function(){ if(this.files&&this.files[0]) handleScannerFile(this.files[0]); });
-      }
-      if(galeria){
-        const newGal = galeria.cloneNode(true);
-        galeria.parentNode.replaceChild(newGal, galeria);
-        newGal.addEventListener('change', function(){ if(this.files&&this.files[0]) handleScannerFile(this.files[0]); });
-      }
+      if(camara) camara.addEventListener('change', function(){ if(this.files&&this.files[0]) handleScannerFile(this.files[0]); });
+      if(galeria) galeria.addEventListener('change', function(){ if(this.files&&this.files[0]) handleScannerFile(this.files[0]); });
       cargarHistorialAlumno();
     }, 100);
   }
@@ -1743,12 +1733,13 @@ function renderScannerAlumno(){
       <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px">Scanner IA</div>
       <div style="font-size:13px;color:var(--text2)">Sube una foto de tu apunte y la IA lo analiza</div>
     </div>
-    <div id="scanner-drop" style="border:2px dashed var(--border2);border-radius:16px;padding:24px 16px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:16px">
-      <div style="font-size:32px;margin-bottom:8px">📸</div>
-      <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px">Sube una foto de tu apunte</div>
-      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
-        <button onclick="document.getElementById('scanner-camara').click()" style="padding:10px 18px;background:var(--accent);color:white;border:none;border-radius:9px;cursor:pointer;font-size:13px;font-weight:600;font-family:var(--sans)">📷 Cámara</button>
-        <button onclick="document.getElementById('scanner-galeria').click()" style="padding:10px 18px;background:var(--bg3);color:var(--text2);border:1px solid var(--border2);border-radius:9px;cursor:pointer;font-size:13px;font-family:var(--sans)">🖼️ Galería</button>
+    <div id="scanner-drop" style="border:2px dashed var(--accent)50;border-radius:18px;padding:32px 20px;text-align:center;transition:all .2s;margin-bottom:16px;background:var(--accent)08">
+      <div style="font-size:48px;margin-bottom:12px">📸</div>
+      <div style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:6px">Analizar apunte con IA</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:22px">Toma una foto o sube una imagen de tu apunte</div>
+      <div style="display:flex;gap:12px;justify-content:center">
+        <button onclick="document.getElementById('scanner-camara').click()" style="padding:14px 28px;background:var(--accent);color:white;border:none;border-radius:12px;cursor:pointer;font-size:15px;font-weight:600;font-family:var(--sans);box-shadow:0 4px 20px var(--accent)40;touch-action:manipulation">📷 Cámara</button>
+        <button onclick="document.getElementById('scanner-galeria').click()" style="padding:14px 22px;background:var(--bg3);color:var(--text2);border:1px solid var(--border2);border-radius:12px;cursor:pointer;font-size:15px;font-family:var(--sans);touch-action:manipulation">🖼️ Galería</button>
       </div>
       <input type="file" id="scanner-camara" accept="image/*" capture="environment" style="display:none"/>
       <input type="file" id="scanner-galeria" accept="image/*" style="display:none"/>
@@ -1867,13 +1858,10 @@ async function calcularHash(b64){
 }
 
 // ── Analizar foto ──────────────────────
-let _analizando = false;
 window.analizarFoto = async function analizarFoto(){
   if(!scannerImagenBase64){ toast('Selecciona una imagen primero',true); return; }
-  if(_analizando) return;
-  _analizando = true;
   const btnA = document.getElementById('btn-analizar');
-  if(btnA) btnA.disabled = true;
+  btnA.disabled = true;
   document.getElementById('scanner-loading').style.display = 'block';
   document.getElementById('scanner-preview-wrap').style.display = 'none';
   setLoadingTxt('Calculando huella digital...');
