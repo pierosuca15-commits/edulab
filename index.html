@@ -1485,7 +1485,9 @@ window.showTab=(tab)=>{
 window.openModal=(id)=>document.getElementById(id).classList.add('open');
 window.closeModal=function(id){
   document.getElementById(id).classList.remove('open');
-  if(id==='scanner-result-modal') window.resetScanner();
+  // Solo resetear si NO se está abriendo el chat de dudas
+  if(id==='scanner-result-modal' && !window._abriendo_dudas) window.resetScanner();
+  window._abriendo_dudas = false;
 };
 document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); }));
 
@@ -1822,18 +1824,17 @@ function leerArchivo(file){
 
 window.resetScanner = function resetScanner(){
   scannerImagenBase64 = null;
-  _analizando = false;
+  if(typeof _analizando !== 'undefined') _analizando = false;
+
   const pw = document.getElementById('scanner-preview-wrap');
   const sd = document.getElementById('scanner-drop');
 
-  // Restaurar HTML original del preview-wrap
-  // (mostrarDuplicado lo reemplaza con su propio HTML)
   if(pw){
     pw.style.display = 'none';
     pw.innerHTML = `
       <div style="position:relative;width:100%">
         <img id="scanner-preview-img" style="width:100%;max-height:340px;object-fit:contain;border-radius:14px;border:1px solid var(--border2);display:block;background:var(--bg3)"/>
-        <button onclick="window.resetScanner()" title="Cambiar imagen" style="position:absolute;top:10px;right:10px;width:44px;height:44px;border-radius:50%;background:rgba(10,10,15,0.88);border:2px solid rgba(255,255,255,0.25);color:white;cursor:pointer;font-size:22px;line-height:44px;text-align:center;z-index:20;touch-action:manipulation">✕</button>
+        <button onclick="window.resetScanner()" style="position:absolute;top:10px;right:10px;width:44px;height:44px;border-radius:50%;background:rgba(10,10,15,0.88);border:2px solid rgba(255,255,255,0.25);color:white;cursor:pointer;font-size:22px;line-height:44px;text-align:center;z-index:20;touch-action:manipulation">✕</button>
       </div>
       <div style="margin-top:14px;display:flex;gap:10px">
         <button onclick="analizarFoto()" id="btn-analizar" style="flex:1;padding:14px 20px;background:var(--accent);color:white;border:none;border-radius:12px;cursor:pointer;font-size:15px;font-weight:600;font-family:var(--sans);box-shadow:0 4px 20px var(--accent)40;touch-action:manipulation">🤖 Analizar con IA</button>
@@ -1841,16 +1842,16 @@ window.resetScanner = function resetScanner(){
       </div>`;
   }
 
-  // Resetear inputs de archivo
-  const cam = document.getElementById('scanner-camara');
-  const gal = document.getElementById('scanner-galeria');
-  if(cam) cam.value = '';
-  if(gal) gal.value = '';
-
-  // Mostrar zona de drop
-  if(sd) sd.style.display = 'block';
+  if(sd){
+    sd.style.display = 'block';
+    setTimeout(()=>{
+      const cam = document.getElementById('scanner-camara');
+      const gal = document.getElementById('scanner-galeria');
+      if(cam){ cam.value=''; cam.onchange=function(){ if(this.files&&this.files[0]) handleScannerFile(this.files[0]); }; }
+      if(gal){ gal.value=''; gal.onchange=function(){ if(this.files&&this.files[0]) handleScannerFile(this.files[0]); }; }
+    }, 50);
+  }
 }
-
 // ── Comprimir imagen ───────────────────
 function comprimirImagen(dataUrl){
   return new Promise((resolve,reject)=>{
@@ -2128,6 +2129,7 @@ No resuelvas ejercicios. Solo fórmulas con explicación. Mínimo 4 fórmulas cl
   if(modo==='examen') prompt=`Basándote en el tema "${scannerAnalisis.tema}" de ${scannerAnalisis.materia}, genera 5 preguntas de opción múltiple de nivel universitario con sus respuestas correctas marcadas. Usa notación LaTeX para fórmulas: $formula$ para inline y $$formula$$ para display. Formato numerado y claro.`;
   if(modo==='resumen') prompt=`Crea un resumen académico completo del tema "${scannerAnalisis.tema} - ${scannerAnalisis.subtema}" de ${scannerAnalisis.materia}. Incluye: definiciones clave, fórmulas importantes con notación LaTeX ($formula$ inline, $$formula$$ display), condiciones de aplicación y puntos esenciales. Organizado con secciones claras.`;
   if(modo==='dudas'){
+    window._abriendo_dudas = true;
     closeModal('scanner-result-modal');
     abrirChatScanner();
     return;
