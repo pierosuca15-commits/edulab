@@ -1480,7 +1480,15 @@ window.showTab=(tab)=>{
 
 // MODALS
 window.openModal=(id)=>document.getElementById(id).classList.add('open');
-window.closeModal=(id)=>document.getElementById(id).classList.remove('open');
+window.closeModal=function(id){
+  document.getElementById(id).classList.remove('open');
+  if(id==='scanner-result-modal'){
+    var drop=document.getElementById('scanner-drop');
+    var prev=document.getElementById('scanner-preview-wrap');
+    if(drop && drop.style.display==='none' && (!prev||prev.style.display==='none'))
+      drop.style.display='block';
+  }
+};
 document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); }));
 
 // MASCOTA
