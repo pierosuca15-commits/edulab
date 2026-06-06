@@ -1822,16 +1822,33 @@ function leerArchivo(file){
 
 window.resetScanner = function resetScanner(){
   scannerImagenBase64 = null;
+  _analizando = false;
   const pw = document.getElementById('scanner-preview-wrap');
   const sd = document.getElementById('scanner-drop');
+
+  // Restaurar HTML original del preview-wrap
+  // (mostrarDuplicado lo reemplaza con su propio HTML)
+  if(pw){
+    pw.style.display = 'none';
+    pw.innerHTML = `
+      <div style="position:relative;width:100%">
+        <img id="scanner-preview-img" style="width:100%;max-height:340px;object-fit:contain;border-radius:14px;border:1px solid var(--border2);display:block;background:var(--bg3)"/>
+        <button onclick="window.resetScanner()" title="Cambiar imagen" style="position:absolute;top:10px;right:10px;width:44px;height:44px;border-radius:50%;background:rgba(10,10,15,0.88);border:2px solid rgba(255,255,255,0.25);color:white;cursor:pointer;font-size:22px;line-height:44px;text-align:center;z-index:20;touch-action:manipulation">✕</button>
+      </div>
+      <div style="margin-top:14px;display:flex;gap:10px">
+        <button onclick="analizarFoto()" id="btn-analizar" style="flex:1;padding:14px 20px;background:var(--accent);color:white;border:none;border-radius:12px;cursor:pointer;font-size:15px;font-weight:600;font-family:var(--sans);box-shadow:0 4px 20px var(--accent)40;touch-action:manipulation">🤖 Analizar con IA</button>
+        <button onclick="window.resetScanner()" style="padding:14px 16px;background:var(--bg3);color:var(--text2);border:1px solid var(--border2);border-radius:12px;cursor:pointer;font-size:20px;touch-action:manipulation">🔄</button>
+      </div>`;
+  }
+
+  // Resetear inputs de archivo
   const cam = document.getElementById('scanner-camara');
   const gal = document.getElementById('scanner-galeria');
-  const img = document.getElementById('scanner-preview-img');
-  if(pw) pw.style.display = 'none';
-  if(sd) sd.style.display = 'block';
   if(cam) cam.value = '';
   if(gal) gal.value = '';
-  if(img) img.src = '';
+
+  // Mostrar zona de drop
+  if(sd) sd.style.display = 'block';
 }
 
 // ── Comprimir imagen ───────────────────
@@ -1981,60 +1998,58 @@ function setLoadingTxt(t){ const el=document.getElementById('scanner-loading-txt
 
 // ── Renderizar texto con KaTeX ─────────
 function renderizarKaTeX(texto, contenedor){
-  if(!texto){ contenedor.innerHTML=''; return; }
+  // Proteger bloques LaTeX antes de escapar HTML
   const placeholders = [];
   let t = texto;
 
-  // 1. Proteger bloques LaTeX (display primero, luego inline)
-  // Soporta tanto $$ como \[ \]
-  t = t.replace(/\\\[([\s\S]+?)\\\]/g, (m,p1)=>{ placeholders.push({d:true,v:p1}); return 'PHD'+(placeholders.length-1)+'Z'; });
-  t = t.replace(/\$\$([\s\S]+?)\$\$/g, (m,p1)=>{ placeholders.push({d:true,v:p1}); return 'PHD'+(placeholders.length-1)+'Z'; });
-  t = t.replace(/\\\(([\s\S]+?)\\\)/g, (m,p1)=>{ placeholders.push({d:false,v:p1}); return 'PHI'+(placeholders.length-1)+'Z'; });
-  t = t.replace(/\$([^$\n]{1,200}?)\$/g, (m,p1)=>{ if(p1.trim()) { placeholders.push({d:false,v:p1}); return 'PHI'+(placeholders.length-1)+'Z'; } return m; });
+  // Extraer $$...$$ y $...$ temporalmente
+  t = t.replace(/\$\$([\s\S]+?)\$\$/g, (m,p1)=>{ placeholders.push({type:'display',tex:p1}); return 'PHOLD_D_'+(placeholders.length-1)+'_END'; });
+  t = t.replace(/\$([^$\n]+?)\$/g, (m,p1)=>{ placeholders.push({type:'inline',tex:p1}); return 'PHOLD_I_'+(placeholders.length-1)+'_END'; });
 
-  // 2. Escapar HTML (seguro porque LaTeX ya está protegido)
+  // Escapar HTML
   t = t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
-  // 3. Markdown → HTML
-  t = t.replace(/\*\*([^*\n]+?)\*\*/g,'<strong style="color:var(--text)">$1</strong>');
-  t = t.replace(/\*([^*\n]+?)\*/g,'<em style="color:var(--text2)">$1</em>');
-  t = t.replace(/^---+$/gm,'<hr style="border:none;border-top:1px solid var(--border);margin:10px 0">');
-  t = t.replace(/^####\s*(.+)$/gm,'<div style="font-size:13px;font-weight:700;color:var(--accent);margin:12px 0 4px">$1</div>');
-  t = t.replace(/^###\s*(.+)$/gm,'<div style="font-size:13px;font-weight:700;color:var(--accent);margin:12px 0 4px;text-transform:uppercase;letter-spacing:.5px">$1</div>');
-  t = t.replace(/^##\s*(.+)$/gm,'<div style="font-size:15px;font-weight:700;color:var(--text);margin:14px 0 6px;border-bottom:1px solid var(--border);padding-bottom:3px">$1</div>');
-  t = t.replace(/^#\s*(.+)$/gm,'<div style="font-size:17px;font-weight:700;color:var(--text);margin:14px 0 8px">$1</div>');
-  t = t.replace(/^[-*]\s+(.+)$/gm,'<div style="padding:3px 0 3px 12px;border-left:2px solid var(--accent);margin:3px 0">$1</div>');
-  t = t.replace(/^(\d+)\.\s+(.+)$/gm,'<div style="padding:3px 0;margin:3px 0"><span style="color:var(--accent);font-weight:700;margin-right:5px">$1.</span>$2</div>');
-  t = t.replace(/`([^`]+?)`/g,'<code style="background:var(--bg4);padding:1px 5px;border-radius:4px;font-size:12px;color:var(--green);font-family:var(--mono)">$1</code>');
+  // Markdown → HTML
+  // **negrita** (incluso con : al final)
+  t = t.replace(/\*\*([^*]+?)\*\*/g,'<strong style="color:var(--text);font-weight:700">$1</strong>');
+  // *cursiva*
+  t = t.replace(/\*([^*\n]+?)\*/g,'<em>$1</em>');
+  // ### titulo
+  t = t.replace(/^###\s*(.+)$/gm,'<div style="font-size:12px;font-weight:700;color:var(--accent);margin:14px 0 5px;letter-spacing:1px;text-transform:uppercase">$1</div>');
+  t = t.replace(/^##\s*(.+)$/gm,'<div style="font-size:15px;font-weight:700;color:var(--text);margin:14px 0 7px;border-bottom:1px solid var(--border);padding-bottom:4px">$1</div>');
+  t = t.replace(/^#\s*(.+)$/gm,'<div style="font-size:17px;font-weight:700;color:var(--text);margin:16px 0 8px">$1</div>');
+  // * item y - item
+  t = t.replace(/^[*\-]\s+(.+)$/gm,'<div style="padding:4px 0 4px 14px;border-left:2px solid var(--accent);margin:3px 0;color:var(--text)">$1</div>');
+  // 1. item
+  t = t.replace(/^(\d+)\.\s+(.+)$/gm,'<div style="padding:4px 0 4px 0;margin:4px 0;color:var(--text)"><span style="color:var(--accent);font-weight:700;margin-right:6px">$1.</span>$2</div>');
+  // \n\n → espacio
   t = t.replace(/\n\n/g,'<div style="margin:6px 0"></div>');
+  // \n → <br>
   t = t.replace(/\n/g,'<br>');
+  // `code`
+  t = t.replace(/`([^`]+?)`/g,'<code style="background:var(--bg4);padding:1px 6px;border-radius:4px;font-family:var(--mono);font-size:12px;color:var(--green)">$1</code>');
 
-  // 4. Restaurar LaTeX
+  // Restaurar placeholders LaTeX
   placeholders.forEach((p,i)=>{
-    if(p.d) t = t.split('PHD'+i+'Z').join('$$'+p.v+'$$');
-    else t = t.split('PHI'+i+'Z').join('$'+p.v+'$');
+    if(p.type==='display') t = t.replace('PHOLD_D_'+i+'_END', '$$'+p.tex+'$$');
+    else t = t.replace('PHOLD_I_'+i+'_END', '$'+p.tex+'$');
   });
 
   contenedor.innerHTML = t;
 
-  // 5. Renderizar KaTeX — esperar si aún no cargó
-  function doRender(){
-    if(window.renderMathInElement){
-      try{
-        renderMathInElement(contenedor,{
-          delimiters:[
-            {left:'$$',right:'$$',display:true},
-            {left:'$',right:'$',display:false}
-          ],
-          throwOnError:false,
-          strict:false,
-          output:'html'
-        });
-      }catch(e){ console.warn('KaTeX:',e); }
-    }
+  // Renderizar KaTeX
+  if(window.renderMathInElement){
+    try{
+      renderMathInElement(contenedor, {
+        delimiters:[
+          {left:'$$',right:'$$',display:true},
+          {left:'$',right:'$',display:false}
+        ],
+        throwOnError:false,
+        output:'html'
+      });
+    }catch(e){ console.warn('KaTeX:',e); }
   }
-  if(window.renderMathInElement){ doRender(); }
-  else { setTimeout(doRender, 800); }
 }
 
 // ── Mostrar resultado ──────────────────
