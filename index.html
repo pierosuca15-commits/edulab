@@ -696,15 +696,18 @@ body.mobile-layout .topic-grid{grid-template-columns:repeat(2,1fr)}
 
 <!-- MODAL DUDAS SCANNER -->
 <div class="modal" id="scanner-chat-modal">
-  <div class="modal-box" style="max-width:440px;padding:0;overflow:hidden">
-    <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-      <div style="font-size:15px;font-weight:600">💬 Chat de dudas</div>
-      <button onclick="closeModal('scanner-chat-modal')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px">✕</button>
+  <div class="modal-box" style="max-width:560px;width:95vw;padding:0;overflow:hidden;display:flex;flex-direction:column;max-height:88vh">
+    <div style="padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <div>
+        <div style="font-size:15px;font-weight:700">💬 Chat de dudas</div>
+        <div id="scanner-chat-subtitulo" style="font-size:12px;color:var(--text2);margin-top:2px"></div>
+      </div>
+      <button onclick="closeModal('scanner-chat-modal')" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text2);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px">✕</button>
     </div>
-    <div id="scanner-chat-msgs" style="height:300px;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px"></div>
-    <div style="padding:10px 12px;border-top:1px solid var(--border);display:flex;gap:8px">
-      <input id="scanner-chat-inp" class="finp" placeholder="Escribe tu pregunta..." onkeydown="if(event.key==='Enter') enviarChatScanner()" style="flex:1;margin:0"/>
-      <button onclick="enviarChatScanner()" style="padding:9px 16px;background:var(--accent);color:white;border:none;border-radius:9px;cursor:pointer;font-size:14px">➤</button>
+    <div id="scanner-chat-msgs" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;min-height:300px"></div>
+    <div style="padding:12px 14px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;background:var(--bg2)">
+      <input id="scanner-chat-inp" class="finp" placeholder="Escribe tu pregunta aquí..." onkeydown="if(event.key==='Enter'&&!event.shiftKey) enviarChatScanner()" style="flex:1;margin:0;font-size:14px"/>
+      <button onclick="enviarChatScanner()" id="scanner-chat-btn" style="padding:10px 18px;background:var(--accent);color:white;border:none;border-radius:10px;cursor:pointer;font-size:16px;touch-action:manipulation">➤</button>
     </div>
   </div>
 </div>
@@ -2135,53 +2138,96 @@ let scannerChatHistory = [];
 window.abrirChatScanner = function abrirChatScanner(){
   scannerChatHistory = [];
   const msgs = document.getElementById('scanner-chat-msgs');
-  msgs.innerHTML = `<div style="background:var(--bg3);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--text2);align-self:flex-start">Hola! Puedo ayudarte con <b>${scannerAnalisis?.tema||'el tema'}</b>. ¿Qué dudas tienes?</div>`;
+  const sub = document.getElementById('scanner-chat-subtitulo');
+  if(sub) sub.textContent = (scannerAnalisis?.materia||'') + ' · ' + (scannerAnalisis?.tema||'');
+  // Burbuja de bienvenida
+  msgs.innerHTML = '';
+  const bienvenida = document.createElement('div');
+  bienvenida.style.cssText = 'background:var(--bg3);border:1px solid var(--border2);border-radius:14px 14px 14px 4px;padding:12px 14px;font-size:14px;color:var(--text);align-self:flex-start;max-width:85%;line-height:1.6';
+  bienvenida.innerHTML = 'Hola! Soy tu asistente de <b style="color:var(--accent)">' + (scannerAnalisis?.materia||'Física') + '</b>. Estoy listo para ayudarte con <b>' + (scannerAnalisis?.tema||'el tema') + '</b>.<br><span style="color:var(--text2);font-size:13px">¿Qué quieres saber?</span>';
+  msgs.appendChild(bienvenida);
   openModal('scanner-chat-modal');
+  setTimeout(()=>{ document.getElementById('scanner-chat-inp').focus(); }, 300);
 }
 
 window.enviarChatScanner = async function enviarChatScanner(){
   const inp = document.getElementById('scanner-chat-inp');
+  const btn = document.getElementById('scanner-chat-btn');
   const txt = inp.value.trim();
   if(!txt) return;
   inp.value='';
+  if(btn) btn.disabled = true;
+
   const msgs = document.getElementById('scanner-chat-msgs');
-  msgs.innerHTML += `<div style="background:var(--accent);color:white;border-radius:10px;padding:8px 12px;font-size:13px;align-self:flex-end;max-width:85%">${txt}</div>`;
-  msgs.scrollTop=99999;
-  scannerChatHistory.push({role:'user',parts:[{text:txt}]});
-  const sysTxt = `Eres un asistente académico de ingeniería universitaria especializado en ${scannerAnalisis?.materia||'Física'}. El estudiante está estudiando: "${scannerAnalisis?.tema||'ingeniería'}" - ${scannerAnalisis?.subtema||''}. Explica de forma clara, usa ejemplos concretos y responde siempre en español.`;
-  // Convertir historial de Gemini format a Claude format
+
+  // Burbuja del usuario
+  const userBubble = document.createElement('div');
+  userBubble.style.cssText = 'background:var(--accent);color:white;border-radius:14px 14px 4px 14px;padding:10px 14px;font-size:14px;align-self:flex-end;max-width:80%;line-height:1.5;word-break:break-word';
+  userBubble.textContent = txt;
+  msgs.appendChild(userBubble);
+  msgs.scrollTop = 99999;
+
+  scannerChatHistory.push({role:'user', parts:[{text:txt}]});
+
+  const sysTxt = `Eres un asistente académico experto en ${scannerAnalisis?.materia||'Física'} universitaria. El estudiante estudia: "${scannerAnalisis?.tema||'ingeniería'}" - ${scannerAnalisis?.subtema||''}. Responde en español, de forma clara y estructurada. Usa formato Markdown para organizar: **negrita** para conceptos clave, listas con -, fórmulas con $formula$ (inline) o $$formula$$ (display). Sé conciso pero completo.`;
+
   const historialClaude = scannerChatHistory.map(m => ({
     role: m.role === 'model' ? 'assistant' : 'user',
     content: m.parts?.[0]?.text || m.content || ''
   }));
-  // Indicador de "escribiendo"
+
+  // Burbuja de "escribiendo"
   const botTyping = document.createElement('div');
-  botTyping.style.cssText = 'background:var(--bg3);border-radius:10px;padding:8px 12px;font-size:13px;color:var(--text3);align-self:flex-start;font-style:italic';
+  botTyping.style.cssText = 'background:var(--bg3);border:1px solid var(--border);border-radius:14px 14px 14px 4px;padding:10px 14px;font-size:14px;color:var(--text3);align-self:flex-start;font-style:italic;max-width:85%';
   botTyping.textContent = '⏳ Escribiendo...';
   msgs.appendChild(botTyping);
-  msgs.scrollTop=99999;
+  msgs.scrollTop = 99999;
+
   try{
     const r = await fetch(window.CLAUDE_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-haiku-4-5',
-        max_tokens: 1000,
+        max_tokens: 1200,
         system: sysTxt,
         messages: historialClaude
       })
     });
     const d = await r.json();
-    if(d.error){ botTyping.style.color='var(--red)'; botTyping.textContent='Error API: '+d.error.message; return; }
+    if(d.error){ botTyping.style.color='var(--red)'; botTyping.style.fontStyle='normal'; botTyping.textContent='Error: '+d.error.message; if(btn) btn.disabled=false; return; }
     const reply = d.content?.[0]?.text || 'No pude responder.';
-    // Guardar en historial formato Gemini para compatibilidad
     scannerChatHistory.push({role:'model', parts:[{text:reply}]});
-    botTyping.style.color='var(--text)';
+
+    // Renderizar respuesta con Markdown + KaTeX
+    botTyping.style.fontStyle = 'normal';
+    botTyping.style.color = 'var(--text)';
+    botTyping.style.lineHeight = '1.7';
+    renderizarKaTeX(reply, botTyping);
+    msgs.scrollTop = 99999;
+
+    // Guardar conversación en Firestore si hay análisis activo
+    if(scannerAnalisis && currentUser && db){
+      try{
+        await addDoc(collection(db, `scanner_historial/${currentUser.id}/chats`), {
+          alumnoId: currentUser.id,
+          alumno: currentUser.name||'alumno',
+          tema: scannerAnalisis.tema||'',
+          materia: scannerAnalisis.materia||'',
+          pregunta: txt,
+          respuesta: reply,
+          fecha: new Date().toISOString(),
+          createdAt: serverTimestamp()
+        });
+      }catch(e){ console.warn('No se pudo guardar el chat:', e); }
+    }
+  }catch(e){
+    botTyping.style.color='var(--red)';
     botTyping.style.fontStyle='normal';
-    botTyping.style.whiteSpace='pre-wrap';
-    botTyping.textContent = reply;
-    msgs.scrollTop=99999;
-  }catch(e){ botTyping.style.color='var(--red)'; botTyping.textContent='Error de conexión: '+e.message; }
+    botTyping.textContent='Error de conexión: '+e.message;
+  }
+  if(btn) btn.disabled = false;
+  inp.focus();
 }
 
 // ── Historial alumno ───────────────────
