@@ -133,9 +133,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:15
 .pg-sub{font-size:13px;color:var(--text2);margin-top:4px}
 
 /* TABS */
-.tabs{display:flex;gap:3px;padding:12px 20px 0;flex-shrink:0;overflow-x:auto}
+.tabs{display:flex;gap:3px;padding:12px 20px 0;flex-shrink:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .tabs::-webkit-scrollbar{height:0}
-.tab{padding:8px 18px;border-radius:9px;cursor:pointer;font-size:14px;color:var(--text2);transition:all .15s;border:1px solid transparent;white-space:nowrap}
+.tab{padding:8px 14px;border-radius:9px;cursor:pointer;font-size:13px;color:var(--text2);transition:all .15s;border:1px solid transparent;white-space:nowrap;flex-shrink:0}
 .tab:hover{background:var(--bg3);color:var(--text)}
 .tab.active{background:var(--bg3);color:var(--text);border-color:var(--border2)}
 .tab.admin-only{display:none}
@@ -355,6 +355,12 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:15
 body.mobile-layout .sidebar{display:none}
 body.mobile-layout .mobile-course-bar{display:flex}
 body.mobile-layout .main-hdr,.mobile-layout .tabs{padding-left:14px;padding-right:14px}
+@media(max-width:480px){
+  .tab{padding:7px 10px;font-size:12px}
+  #tab-topics::after{content:''}
+  #tab-schedule::after{content:''}
+  #tab-scanner::after{content:''}
+}
 body.mobile-layout .tab-page{padding:12px 14px 18px}
 body.mobile-layout .week-grid{grid-template-columns:repeat(4,1fr)}
 body.mobile-layout .topic-grid{grid-template-columns:repeat(2,1fr)}
