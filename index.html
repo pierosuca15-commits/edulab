@@ -684,7 +684,8 @@ body.mobile-layout .topic-grid{grid-template-columns:repeat(2,1fr)}
     <!-- FOOTER con acciones -->
     <div style="padding:14px 22px;border-top:1px solid var(--border);background:var(--bg2);flex-shrink:0">
       <div style="font-size:12px;color:var(--text3);margin-bottom:10px;text-align:center">¿Qué quieres hacer?</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button onclick="modoScanner('formulas')" style="padding:12px 8px;border-radius:12px;border:1px solid #6c63ff40;background:#6c63ff15;color:#8b84ff;cursor:pointer;font-size:13px;font-family:var(--sans);font-weight:600;transition:all .15s" onmouseover="this.style.background='#6c63ff25';this.style.borderColor='var(--accent)'" onmouseout="this.style.background='#6c63ff15';this.style.borderColor='#6c63ff40'">📐 Fórmulas</button>
         <button onclick="modoScanner('examen')" style="padding:12px 8px;border-radius:12px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;font-size:13px;font-family:var(--sans);font-weight:500;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text2)'">🎯 Examen</button>
         <button onclick="modoScanner('resumen')" style="padding:12px 8px;border-radius:12px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;font-size:13px;font-family:var(--sans);font-weight:500;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text2)'">📝 Resumen</button>
         <button onclick="modoScanner('dudas')" style="padding:12px 8px;border-radius:12px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;font-size:13px;font-family:var(--sans);font-weight:500;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text2)'">💬 Dudas</button>
@@ -1745,14 +1746,14 @@ function renderScannerAlumno(){
       <input type="file" id="scanner-camara" accept="image/*" capture="environment" style="display:none"/>
       <input type="file" id="scanner-galeria" accept="image/*" style="display:none"/>
     </div>
-    <div id="scanner-preview-wrap" style="display:none;margin-bottom:16px">
-      <div style="position:relative;width:100%">
-        <img id="scanner-preview-img" style="width:100%;max-height:340px;object-fit:contain;border-radius:14px;border:1px solid var(--border2);display:block;background:var(--bg3)"/>
-        <button onclick="window.resetScanner()" title="Cambiar imagen" style="position:absolute;top:10px;right:10px;width:40px;height:40px;border-radius:50%;background:rgba(15,15,20,0.85);border:2px solid rgba(255,255,255,0.3);color:white;cursor:pointer;font-size:20px;line-height:1;z-index:10;touch-action:manipulation">✕</button>
+    <div id="scanner-preview-wrap" style="display:none;margin-bottom:16px;text-align:center">
+      <div style="position:relative;display:inline-block;max-width:100%">
+        <img id="scanner-preview-img" style="max-width:100%;max-height:320px;border-radius:14px;border:1px solid var(--border2);display:block"/>
+        <button onclick="resetScanner()" title="Cambiar imagen" style="position:absolute;top:8px;right:8px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.2);color:white;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);transition:all .2s" onmouseover="this.style.background='rgba(239,68,68,0.8)'" onmouseout="this.style.background='rgba(0,0,0,0.7)'">✕</button>
       </div>
       <div style="margin-top:14px;display:flex;gap:10px;justify-content:center">
-        <button onclick="analizarFoto()" id="btn-analizar" style="flex:1;max-width:260px;padding:14px 20px;background:var(--accent);color:white;border:none;border-radius:12px;cursor:pointer;font-size:15px;font-weight:600;font-family:var(--sans);box-shadow:0 4px 20px var(--accent)40">🤖 Analizar con IA</button>
-        <button onclick="window.resetScanner()" style="padding:14px 16px;background:var(--bg3);color:var(--text2);border:1px solid var(--border2);border-radius:12px;cursor:pointer;font-size:14px;font-family:var(--sans)">🔄</button>
+        <button onclick="analizarFoto()" id="btn-analizar" style="padding:14px 32px;background:var(--accent);color:white;border:none;border-radius:12px;cursor:pointer;font-size:15px;font-weight:600;font-family:var(--sans);box-shadow:0 4px 20px var(--accent)40;transition:all .2s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">🤖 Analizar con IA</button>
+        <button onclick="resetScanner()" style="padding:14px 18px;background:var(--bg3);color:var(--text2);border:1px solid var(--border2);border-radius:12px;cursor:pointer;font-size:14px;font-family:var(--sans);transition:all .2s" title="Cambiar imagen">🔄 Cambiar</button>
       </div>
     </div>
     <div id="scanner-loading" style="display:none;text-align:center;padding:24px">
@@ -1815,19 +1816,12 @@ function leerArchivo(file){
   });
 }
 
-window.resetScanner = function resetScanner(){
+function resetScanner(){
   scannerImagenBase64 = null;
-  const pw = document.getElementById('scanner-preview-wrap');
-  const sd = document.getElementById('scanner-drop');
-  const cam = document.getElementById('scanner-camara');
-  const gal = document.getElementById('scanner-galeria');
-  if(pw) pw.style.display = 'none';
-  if(sd) sd.style.display = 'block';
-  if(cam) cam.value = '';
-  if(gal) gal.value = '';
-  // Resetear imagen
-  const img = document.getElementById('scanner-preview-img');
-  if(img) img.src = '';
+  document.getElementById('scanner-preview-wrap').style.display = 'none';
+  document.getElementById('scanner-drop').style.display = 'block';
+  document.getElementById('scanner-camara').value = '';
+  document.getElementById('scanner-galeria').value = '';
 }
 
 // ── Comprimir imagen ───────────────────
@@ -1977,35 +1971,12 @@ function setLoadingTxt(t){ const el=document.getElementById('scanner-loading-txt
 
 // ── Renderizar texto con KaTeX ─────────
 function renderizarKaTeX(texto, contenedor){
-  // 1. Escapar HTML básico (preservando $ para LaTeX)
-  let html = texto
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;');
-
-  // 2. Convertir Markdown básico a HTML
-  // **negrita** → <b>
-  html = html.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
-  // *cursiva* → <i>
-  html = html.replace(/\*(.+?)\*/g,'<i>$1</i>');
-  // ### Títulos
-  html = html.replace(/^###\s*(.+)$/gm,'<div style="font-size:13px;font-weight:700;color:var(--accent);margin:12px 0 6px;text-transform:uppercase;letter-spacing:0.5px">$1</div>');
-  html = html.replace(/^##\s*(.+)$/gm,'<div style="font-size:15px;font-weight:700;color:var(--text);margin:14px 0 8px">$1</div>');
-  html = html.replace(/^#\s*(.+)$/gm,'<div style="font-size:17px;font-weight:700;color:var(--text);margin:16px 0 8px">$1</div>');
-  // * item → lista
-  html = html.replace(/^[\*\-]\s+(.+)$/gm,'<div style="padding:3px 0 3px 16px;border-left:2px solid var(--accent)40;margin:3px 0">$1</div>');
-  // Número. item → lista numerada
-  html = html.replace(/^(\d+)\.\s+(.+)$/gm,'<div style="padding:3px 0 3px 16px;color:var(--text);margin:4px 0"><span style="color:var(--accent);font-weight:700">$1.</span> $2</div>');
-  // Saltos de línea dobles → separador
-  html = html.replace(/\n\n/g,'<div style="margin:8px 0"></div>');
-  // Saltos simples → <br>
-  html = html.replace(/\n/g,'<br>');
-  // `codigo` → styled code
-  html = html.replace(/`(.+?)`/g,'<code style="background:var(--bg4);padding:1px 5px;border-radius:4px;font-family:var(--mono);font-size:12px;color:var(--green)">$1</code>');
-
+  // Convertir saltos de línea a <br> preservando bloques
+  const html = texto
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\n/g,'<br>');
   contenedor.innerHTML = html;
-
-  // 3. Renderizar KaTeX
+  // Renderizar KaTeX si está disponible
   if(window.renderMathInElement){
     try{
       renderMathInElement(contenedor, {
@@ -2068,6 +2039,14 @@ window.modoScanner = async function modoScanner(modo){
   const res = document.getElementById('srm-modo-resultado');
   res.style.display='block'; res.textContent='⏳ Generando...';
   let prompt = '';
+  if(modo==='formulas') prompt=`Crea una hoja de referencia de fórmulas para el tema "${scannerAnalisis.tema}" de ${scannerAnalisis.materia} (subtema: ${scannerAnalisis.subtema}). 
+Para cada fórmula importante incluye:
+1. Nombre de la fórmula o ley
+2. La ecuación en LaTeX: $$formula$$
+3. Descripción breve de qué significa cada variable (una línea)
+4. Cuándo se aplica (una línea)
+
+No resuelvas ningún ejercicio. Solo lista las fórmulas con su explicación conceptual. Usa $$...$$ para display y $...$ para variables inline. Mínimo 4 fórmulas clave del tema.`;
   if(modo==='examen') prompt=`Basándote en el tema "${scannerAnalisis.tema}" de ${scannerAnalisis.materia}, genera 5 preguntas de opción múltiple de nivel universitario con sus respuestas correctas marcadas. Usa notación LaTeX para fórmulas: $formula$ para inline y $$formula$$ para display. Formato numerado y claro.`;
   if(modo==='resumen') prompt=`Crea un resumen académico completo del tema "${scannerAnalisis.tema} - ${scannerAnalisis.subtema}" de ${scannerAnalisis.materia}. Incluye: definiciones clave, fórmulas importantes con notación LaTeX ($formula$ inline, $$formula$$ display), condiciones de aplicación y puntos esenciales. Organizado con secciones claras.`;
   if(modo==='dudas'){
