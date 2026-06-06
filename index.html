@@ -684,8 +684,7 @@ body.mobile-layout .topic-grid{grid-template-columns:repeat(2,1fr)}
     <!-- FOOTER con acciones -->
     <div style="padding:14px 22px;border-top:1px solid var(--border);background:var(--bg2);flex-shrink:0">
       <div style="font-size:12px;color:var(--text3);margin-bottom:10px;text-align:center">¿Qué quieres hacer?</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <button onclick="modoScanner('formulas')" style="padding:12px 8px;border-radius:12px;border:1px solid #6c63ff40;background:#6c63ff15;color:#8b84ff;cursor:pointer;font-size:13px;font-family:var(--sans);font-weight:600;transition:all .15s" onmouseover="this.style.background='#6c63ff25';this.style.borderColor='var(--accent)'" onmouseout="this.style.background='#6c63ff15';this.style.borderColor='#6c63ff40'">📐 Fórmulas</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
         <button onclick="modoScanner('examen')" style="padding:12px 8px;border-radius:12px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;font-size:13px;font-family:var(--sans);font-weight:500;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text2)'">🎯 Examen</button>
         <button onclick="modoScanner('resumen')" style="padding:12px 8px;border-radius:12px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;font-size:13px;font-family:var(--sans);font-weight:500;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text2)'">📝 Resumen</button>
         <button onclick="modoScanner('dudas')" style="padding:12px 8px;border-radius:12px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;font-size:13px;font-family:var(--sans);font-weight:500;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text2)'">💬 Dudas</button>
@@ -1971,25 +1970,57 @@ function setLoadingTxt(t){ const el=document.getElementById('scanner-loading-txt
 
 // ── Renderizar texto con KaTeX ─────────
 function renderizarKaTeX(texto, contenedor){
-  // Convertir saltos de línea a <br> preservando bloques
-  const html = texto
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/\n/g,'<br>');
-  contenedor.innerHTML = html;
-  // Renderizar KaTeX si está disponible
+  // Proteger bloques LaTeX antes de escapar HTML
+  const placeholders = [];
+  let t = texto;
+
+  // Extraer $$...$$ y $...$ temporalmente
+  t = t.replace(/\$\$([\s\S]+?)\$\$/g, (m,p1)=>{ placeholders.push({type:'display',tex:p1}); return '§D'+(placeholders.length-1)+'§'; });
+  t = t.replace(/\$([^$\n]+?)\$/g, (m,p1)=>{ placeholders.push({type:'inline',tex:p1}); return '§I'+(placeholders.length-1)+'§'; });
+
+  // Escapar HTML
+  t = t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  // Markdown → HTML
+  // **negrita** (incluso con : al final)
+  t = t.replace(/\*\*([^*]+?)\*\*/g,'<strong style="color:var(--text);font-weight:700">$1</strong>');
+  // *cursiva*
+  t = t.replace(/\*([^*\n]+?)\*/g,'<em>$1</em>');
+  // ### titulo
+  t = t.replace(/^###\s*(.+)$/gm,'<div style="font-size:12px;font-weight:700;color:var(--accent);margin:14px 0 5px;letter-spacing:1px;text-transform:uppercase">$1</div>');
+  t = t.replace(/^##\s*(.+)$/gm,'<div style="font-size:15px;font-weight:700;color:var(--text);margin:14px 0 7px;border-bottom:1px solid var(--border);padding-bottom:4px">$1</div>');
+  t = t.replace(/^#\s*(.+)$/gm,'<div style="font-size:17px;font-weight:700;color:var(--text);margin:16px 0 8px">$1</div>');
+  // * item y - item
+  t = t.replace(/^[*\-]\s+(.+)$/gm,'<div style="padding:4px 0 4px 14px;border-left:2px solid var(--accent);margin:3px 0;color:var(--text)">$1</div>');
+  // 1. item
+  t = t.replace(/^(\d+)\.\s+(.+)$/gm,'<div style="padding:4px 0 4px 0;margin:4px 0;color:var(--text)"><span style="color:var(--accent);font-weight:700;margin-right:6px">$1.</span>$2</div>');
+  // \n\n → espacio
+  t = t.replace(/\n\n/g,'<div style="margin:6px 0"></div>');
+  // \n → <br>
+  t = t.replace(/\n/g,'<br>');
+  // `code`
+  t = t.replace(/`([^`]+?)`/g,'<code style="background:var(--bg4);padding:1px 6px;border-radius:4px;font-family:var(--mono);font-size:12px;color:var(--green)">$1</code>');
+
+  // Restaurar placeholders LaTeX
+  placeholders.forEach((p,i)=>{
+    if(p.type==='display') t = t.replace('§D'+i+'§', '$$'+p.tex+'$$');
+    else t = t.replace('§I'+i+'§', '$'+p.tex+'$');
+  });
+
+  contenedor.innerHTML = t;
+
+  // Renderizar KaTeX
   if(window.renderMathInElement){
     try{
       renderMathInElement(contenedor, {
         delimiters:[
           {left:'$$',right:'$$',display:true},
-          {left:'$',right:'$',display:false},
-          {left:'\\(',right:'\\)',display:false},
-          {left:'\\[',right:'\\]',display:true}
+          {left:'$',right:'$',display:false}
         ],
         throwOnError:false,
         output:'html'
       });
-    }catch(e){ console.warn('KaTeX error:',e); }
+    }catch(e){ console.warn('KaTeX:',e); }
   }
 }
 
@@ -2039,14 +2070,6 @@ window.modoScanner = async function modoScanner(modo){
   const res = document.getElementById('srm-modo-resultado');
   res.style.display='block'; res.textContent='⏳ Generando...';
   let prompt = '';
-  if(modo==='formulas') prompt=`Crea una hoja de referencia de fórmulas para el tema "${scannerAnalisis.tema}" de ${scannerAnalisis.materia} (subtema: ${scannerAnalisis.subtema}). 
-Para cada fórmula importante incluye:
-1. Nombre de la fórmula o ley
-2. La ecuación en LaTeX: $$formula$$
-3. Descripción breve de qué significa cada variable (una línea)
-4. Cuándo se aplica (una línea)
-
-No resuelvas ningún ejercicio. Solo lista las fórmulas con su explicación conceptual. Usa $$...$$ para display y $...$ para variables inline. Mínimo 4 fórmulas clave del tema.`;
   if(modo==='examen') prompt=`Basándote en el tema "${scannerAnalisis.tema}" de ${scannerAnalisis.materia}, genera 5 preguntas de opción múltiple de nivel universitario con sus respuestas correctas marcadas. Usa notación LaTeX para fórmulas: $formula$ para inline y $$formula$$ para display. Formato numerado y claro.`;
   if(modo==='resumen') prompt=`Crea un resumen académico completo del tema "${scannerAnalisis.tema} - ${scannerAnalisis.subtema}" de ${scannerAnalisis.materia}. Incluye: definiciones clave, fórmulas importantes con notación LaTeX ($formula$ inline, $$formula$$ display), condiciones de aplicación y puntos esenciales. Organizado con secciones claras.`;
   if(modo==='dudas'){
