@@ -1678,7 +1678,18 @@ function renderScanner(){
     <div style="max-width:520px;margin:0 auto;padding:20px 16px">
       ${isAdmin ? renderScannerAdmin() : renderScannerAlumno()}
     </div>`;
-  if(isAdmin) cargarHistorialScanner();
+  if(isAdmin){
+    cargarHistorialScanner();
+  } else {
+    // Conectar inputs DESPUÉS de que el DOM esté listo
+    setTimeout(()=>{
+      const camara = document.getElementById('scanner-camara');
+      const galeria = document.getElementById('scanner-galeria');
+      if(camara) camara.addEventListener('change', function(){ if(this.files&&this.files[0]) handleScannerFile(this.files[0]); });
+      if(galeria) galeria.addEventListener('change', function(){ if(this.files&&this.files[0]) handleScannerFile(this.files[0]); });
+      cargarHistorialAlumno();
+    }, 100);
+  }
 }
 
 function renderScannerAlumno(){
@@ -1695,8 +1706,8 @@ function renderScannerAlumno(){
         <button onclick="document.getElementById('scanner-camara').click()" style="padding:10px 18px;background:var(--accent);color:white;border:none;border-radius:9px;cursor:pointer;font-size:13px;font-weight:600;font-family:var(--sans)">📷 Cámara</button>
         <button onclick="document.getElementById('scanner-galeria').click()" style="padding:10px 18px;background:var(--bg3);color:var(--text2);border:1px solid var(--border2);border-radius:9px;cursor:pointer;font-size:13px;font-family:var(--sans)">🖼️ Galería</button>
       </div>
-      <input type="file" id="scanner-camara" accept="image/*" capture="environment" style="display:none" onchange="handleScannerFile(this.files[0])"/>
-      <input type="file" id="scanner-galeria" accept="image/*" style="display:none" onchange="handleScannerFile(this.files[0])"/>
+      <input type="file" id="scanner-camara" accept="image/*" capture="environment" style="display:none"/>
+      <input type="file" id="scanner-galeria" accept="image/*" style="display:none"/>
     </div>
     <div id="scanner-preview-wrap" style="display:none;margin-bottom:16px;text-align:center">
       <img id="scanner-preview-img" style="max-width:100%;max-height:260px;border-radius:12px;border:1px solid var(--border)"/>
