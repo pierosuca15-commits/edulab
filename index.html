@@ -684,10 +684,11 @@ body.mobile-layout .topic-grid{grid-template-columns:repeat(2,1fr)}
     <!-- FOOTER con acciones -->
     <div style="padding:14px 22px;border-top:1px solid var(--border);background:var(--bg2);flex-shrink:0">
       <div style="font-size:12px;color:var(--text3);margin-bottom:10px;text-align:center">¿Qué quieres hacer?</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
-        <button onclick="modoScanner('examen')" style="padding:12px 8px;border-radius:12px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;font-size:13px;font-family:var(--sans);font-weight:500;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text2)'">🎯 Examen</button>
-        <button onclick="modoScanner('resumen')" style="padding:12px 8px;border-radius:12px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;font-size:13px;font-family:var(--sans);font-weight:500;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text2)'">📝 Resumen</button>
-        <button onclick="modoScanner('dudas')" style="padding:12px 8px;border-radius:12px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;font-size:13px;font-family:var(--sans);font-weight:500;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text2)'">💬 Dudas</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button onclick="modoScanner('formulas')" style="padding:13px 8px;border-radius:12px;border:1px solid #6c63ff50;background:#6c63ff18;color:#9b93ff;cursor:pointer;font-size:13px;font-family:var(--sans);font-weight:600;touch-action:manipulation">📐 Fórmulas</button>
+        <button onclick="modoScanner('examen')" style="padding:13px 8px;border-radius:12px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;font-size:13px;font-family:var(--sans);font-weight:500;touch-action:manipulation">🎯 Examen</button>
+        <button onclick="modoScanner('resumen')" style="padding:13px 8px;border-radius:12px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;font-size:13px;font-family:var(--sans);font-weight:500;touch-action:manipulation">📝 Resumen</button>
+        <button onclick="modoScanner('dudas')" style="padding:13px 8px;border-radius:12px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;font-size:13px;font-family:var(--sans);font-weight:500;touch-action:manipulation">💬 Dudas</button>
       </div>
     </div>
   </div>
@@ -1745,14 +1746,14 @@ function renderScannerAlumno(){
       <input type="file" id="scanner-camara" accept="image/*" capture="environment" style="display:none"/>
       <input type="file" id="scanner-galeria" accept="image/*" style="display:none"/>
     </div>
-    <div id="scanner-preview-wrap" style="display:none;margin-bottom:16px;text-align:center">
-      <div style="position:relative;display:inline-block;max-width:100%">
-        <img id="scanner-preview-img" style="max-width:100%;max-height:320px;border-radius:14px;border:1px solid var(--border2);display:block"/>
-        <button onclick="resetScanner()" title="Cambiar imagen" style="position:absolute;top:8px;right:8px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.2);color:white;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);transition:all .2s" onmouseover="this.style.background='rgba(239,68,68,0.8)'" onmouseout="this.style.background='rgba(0,0,0,0.7)'">✕</button>
+    <div id="scanner-preview-wrap" style="display:none;margin-bottom:16px">
+      <div style="position:relative;width:100%">
+        <img id="scanner-preview-img" style="width:100%;max-height:340px;object-fit:contain;border-radius:14px;border:1px solid var(--border2);display:block;background:var(--bg3)"/>
+        <button onclick="window.resetScanner()" title="Cambiar imagen" style="position:absolute;top:10px;right:10px;width:44px;height:44px;border-radius:50%;background:rgba(10,10,15,0.88);border:2px solid rgba(255,255,255,0.25);color:white;cursor:pointer;font-size:22px;line-height:44px;text-align:center;z-index:20;-webkit-tap-highlight-color:transparent;touch-action:manipulation">✕</button>
       </div>
-      <div style="margin-top:14px;display:flex;gap:10px;justify-content:center">
-        <button onclick="analizarFoto()" id="btn-analizar" style="padding:14px 32px;background:var(--accent);color:white;border:none;border-radius:12px;cursor:pointer;font-size:15px;font-weight:600;font-family:var(--sans);box-shadow:0 4px 20px var(--accent)40;transition:all .2s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">🤖 Analizar con IA</button>
-        <button onclick="resetScanner()" style="padding:14px 18px;background:var(--bg3);color:var(--text2);border:1px solid var(--border2);border-radius:12px;cursor:pointer;font-size:14px;font-family:var(--sans);transition:all .2s" title="Cambiar imagen">🔄 Cambiar</button>
+      <div style="margin-top:14px;display:flex;gap:10px">
+        <button onclick="analizarFoto()" id="btn-analizar" style="flex:1;padding:14px 20px;background:var(--accent);color:white;border:none;border-radius:12px;cursor:pointer;font-size:15px;font-weight:600;font-family:var(--sans);box-shadow:0 4px 20px var(--accent)40;touch-action:manipulation">🤖 Analizar con IA</button>
+        <button onclick="window.resetScanner()" style="padding:14px 16px;background:var(--bg3);color:var(--text2);border:1px solid var(--border2);border-radius:12px;cursor:pointer;font-size:20px;touch-action:manipulation" title="Cambiar imagen">🔄</button>
       </div>
     </div>
     <div id="scanner-loading" style="display:none;text-align:center;padding:24px">
@@ -1815,12 +1816,18 @@ function leerArchivo(file){
   });
 }
 
-function resetScanner(){
+window.resetScanner = function resetScanner(){
   scannerImagenBase64 = null;
-  document.getElementById('scanner-preview-wrap').style.display = 'none';
-  document.getElementById('scanner-drop').style.display = 'block';
-  document.getElementById('scanner-camara').value = '';
-  document.getElementById('scanner-galeria').value = '';
+  const pw = document.getElementById('scanner-preview-wrap');
+  const sd = document.getElementById('scanner-drop');
+  const cam = document.getElementById('scanner-camara');
+  const gal = document.getElementById('scanner-galeria');
+  const img = document.getElementById('scanner-preview-img');
+  if(pw) pw.style.display = 'none';
+  if(sd) sd.style.display = 'block';
+  if(cam) cam.value = '';
+  if(gal) gal.value = '';
+  if(img) img.src = '';
 }
 
 // ── Comprimir imagen ───────────────────
@@ -2070,6 +2077,14 @@ window.modoScanner = async function modoScanner(modo){
   const res = document.getElementById('srm-modo-resultado');
   res.style.display='block'; res.textContent='⏳ Generando...';
   let prompt = '';
+  if(modo==='formulas') prompt=`Crea una hoja de referencia de fórmulas para el tema "${scannerAnalisis.tema}" de ${scannerAnalisis.materia} (${scannerAnalisis.subtema}).
+Para cada fórmula incluye:
+1. **Nombre** de la fórmula o ley
+2. La ecuación: $$formula$$
+3. **Variables**: qué significa cada símbolo (una línea)
+4. **Uso**: cuándo se aplica (una línea)
+
+No resuelvas ejercicios. Solo fórmulas con explicación. Mínimo 4 fórmulas clave.`;
   if(modo==='examen') prompt=`Basándote en el tema "${scannerAnalisis.tema}" de ${scannerAnalisis.materia}, genera 5 preguntas de opción múltiple de nivel universitario con sus respuestas correctas marcadas. Usa notación LaTeX para fórmulas: $formula$ para inline y $$formula$$ para display. Formato numerado y claro.`;
   if(modo==='resumen') prompt=`Crea un resumen académico completo del tema "${scannerAnalisis.tema} - ${scannerAnalisis.subtema}" de ${scannerAnalisis.materia}. Incluye: definiciones clave, fórmulas importantes con notación LaTeX ($formula$ inline, $$formula$$ display), condiciones de aplicación y puntos esenciales. Organizado con secciones claras.`;
   if(modo==='dudas'){
