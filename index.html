@@ -1819,32 +1819,16 @@ function leerArchivo(file){
 
 window.resetScanner = function resetScanner(){
   scannerImagenBase64 = null;
-  _analizando = false;
   const pw = document.getElementById('scanner-preview-wrap');
   const sd = document.getElementById('scanner-drop');
   const cam = document.getElementById('scanner-camara');
   const gal = document.getElementById('scanner-galeria');
-  if(pw){
-    pw.style.display = 'none';
-    // Restaurar HTML original del preview-wrap en caso de que mostrarDuplicado lo haya reemplazado
-    if(!document.getElementById('scanner-preview-img')){
-      pw.innerHTML = \`
-        <div style="position:relative;width:100%">
-          <img id="scanner-preview-img" style="width:100%;max-height:340px;object-fit:contain;border-radius:14px;border:1px solid var(--border2);display:block;background:var(--bg3)"/>
-          <button onclick="window.resetScanner()" title="Cambiar imagen" style="position:absolute;top:10px;right:10px;width:44px;height:44px;border-radius:50%;background:rgba(10,10,15,0.88);border:2px solid rgba(255,255,255,0.25);color:white;cursor:pointer;font-size:22px;line-height:44px;text-align:center;z-index:20;touch-action:manipulation">✕</button>
-        </div>
-        <div style="margin-top:14px;display:flex;gap:10px">
-          <button onclick="analizarFoto()" id="btn-analizar" style="flex:1;padding:14px 20px;background:var(--accent);color:white;border:none;border-radius:12px;cursor:pointer;font-size:15px;font-weight:600;font-family:var(--sans);box-shadow:0 4px 20px var(--accent)40;touch-action:manipulation">🤖 Analizar con IA</button>
-          <button onclick="window.resetScanner()" style="padding:14px 16px;background:var(--bg3);color:var(--text2);border:1px solid var(--border2);border-radius:12px;cursor:pointer;font-size:20px;touch-action:manipulation">🔄</button>
-        </div>\`;
-    } else {
-      const img = document.getElementById('scanner-preview-img');
-      if(img) img.src = '';
-    }
-  }
+  const img = document.getElementById('scanner-preview-img');
+  if(pw) pw.style.display = 'none';
   if(sd) sd.style.display = 'block';
   if(cam) cam.value = '';
   if(gal) gal.value = '';
+  if(img) img.src = '';
 }
 
 // ── Comprimir imagen ───────────────────
@@ -1999,8 +1983,8 @@ function renderizarKaTeX(texto, contenedor){
   let t = texto;
 
   // Extraer $$...$$ y $...$ temporalmente
-  t = t.replace(/\$\$([\s\S]+?)\$\$/g, (m,p1)=>{ placeholders.push({type:'display',tex:p1}); return '§D'+(placeholders.length-1)+'§'; });
-  t = t.replace(/\$([^$\n]+?)\$/g, (m,p1)=>{ placeholders.push({type:'inline',tex:p1}); return '§I'+(placeholders.length-1)+'§'; });
+  t = t.replace(/\$\$([\s\S]+?)\$\$/g, (m,p1)=>{ placeholders.push({type:'display',tex:p1}); return 'PHOLD_D_'+(placeholders.length-1)+'_END'; });
+  t = t.replace(/\$([^$\n]+?)\$/g, (m,p1)=>{ placeholders.push({type:'inline',tex:p1}); return 'PHOLD_I_'+(placeholders.length-1)+'_END'; });
 
   // Escapar HTML
   t = t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -2027,8 +2011,8 @@ function renderizarKaTeX(texto, contenedor){
 
   // Restaurar placeholders LaTeX
   placeholders.forEach((p,i)=>{
-    if(p.type==='display') t = t.replace('§D'+i+'§', '$$'+p.tex+'$$');
-    else t = t.replace('§I'+i+'§', '$'+p.tex+'$');
+    if(p.type==='display') t = t.replace('PHOLD_D_'+i+'_END', '$$'+p.tex+'$$');
+    else t = t.replace('PHOLD_I_'+i+'_END', '$'+p.tex+'$');
   });
 
   contenedor.innerHTML = t;
