@@ -1688,15 +1688,15 @@ function renderScannerAlumno(){
       <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px">Scanner IA</div>
       <div style="font-size:13px;color:var(--text2)">Sube una foto de tu apunte y la IA lo analiza</div>
     </div>
-    <div id="scanner-drop" style="border:2px dashed var(--border2);border-radius:16px;padding:32px 20px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:16px"
-      onclick="document.getElementById('scanner-file-inp').click()"
-      ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
-      ondragleave="this.style.borderColor='var(--border2)'"
-      ondrop="handleScannerDrop(event)">
-      <div style="font-size:36px;margin-bottom:8px">📸</div>
-      <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px">Arrastra tu foto aquí</div>
-      <div style="font-size:12px;color:var(--text3)">o toca para abrir galería / cámara</div>
-      <input type="file" id="scanner-file-inp" accept="image/*" capture="environment" style="display:none" onchange="handleScannerFile(this.files[0])"/>
+    <div id="scanner-drop" style="border:2px dashed var(--border2);border-radius:16px;padding:24px 16px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:16px">
+      <div style="font-size:32px;margin-bottom:8px">📸</div>
+      <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px">Sube una foto de tu apunte</div>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+        <button onclick="document.getElementById('scanner-camara').click()" style="padding:10px 18px;background:var(--accent);color:white;border:none;border-radius:9px;cursor:pointer;font-size:13px;font-weight:600;font-family:var(--sans)">📷 Cámara</button>
+        <button onclick="document.getElementById('scanner-galeria').click()" style="padding:10px 18px;background:var(--bg3);color:var(--text2);border:1px solid var(--border2);border-radius:9px;cursor:pointer;font-size:13px;font-family:var(--sans)">🖼️ Galería</button>
+      </div>
+      <input type="file" id="scanner-camara" accept="image/*" capture="environment" style="display:none" onchange="handleScannerFile(this.files[0])"/>
+      <input type="file" id="scanner-galeria" accept="image/*" style="display:none" onchange="handleScannerFile(this.files[0])"/>
     </div>
     <div id="scanner-preview-wrap" style="display:none;margin-bottom:16px;text-align:center">
       <img id="scanner-preview-img" style="max-width:100%;max-height:260px;border-radius:12px;border:1px solid var(--border)"/>
@@ -1748,7 +1748,8 @@ function resetScanner(){
   scannerImagenBase64 = null;
   document.getElementById('scanner-preview-wrap').style.display = 'none';
   document.getElementById('scanner-drop').style.display = 'block';
-  document.getElementById('scanner-file-inp').value = '';
+  document.getElementById('scanner-camara').value = '';
+  document.getElementById('scanner-galeria').value = '';
 }
 
 // ── Comprimir imagen ───────────────────
