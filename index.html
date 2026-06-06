@@ -1489,7 +1489,7 @@ window.closeModal=function(id){
   if(id==='scanner-result-modal' && !window._abriendo_dudas) window.resetScanner();
   window._abriendo_dudas = false;
 };
-document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); }));
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{ if(e.target===m){ m.classList.remove('open'); if(m.id==='scanner-result-modal' && !window._abriendo_dudas) window.resetScanner(); window._abriendo_dudas=false; } }));
 
 // MASCOTA
 window.selMascota=(el)=>{
@@ -1828,6 +1828,8 @@ window.resetScanner = function resetScanner(){
 
   const pw = document.getElementById('scanner-preview-wrap');
   const sd = document.getElementById('scanner-drop');
+  const sl = document.getElementById('scanner-loading');
+  if(sl) sl.style.display = 'none';
 
   if(pw){
     pw.style.display = 'none';
