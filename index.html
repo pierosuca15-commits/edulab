@@ -434,13 +434,13 @@ body.mobile-layout .topic-grid{grid-template-columns:repeat(2,1fr)}
       <div class="tabs" id="tabs-row">
         <div class="tab active" onclick="showTab('topics')" id="tab-topics">📂 Temas</div>
         <div class="tab" onclick="showTab('schedule')" id="tab-schedule">📅 Horario</div>
-
+        <div class="tab" onclick="showTab('scanner')" id="tab-scanner">📷 Scanner</div>
         <div class="tab admin-only" onclick="showTab('admin')" id="tab-admin">⚙️ Admin</div>
       </div>
       <div class="tab-pages">
         <div class="tab-page active" id="page-topics"><div id="topics-content"></div></div>
         <div class="tab-page" id="page-schedule"><div id="schedule-content"></div></div>
-
+        <div class="tab-page" id="page-scanner"><div id="scanner-content"></div></div>
         <div class="tab-page" id="page-admin"><div id="admin-content"></div></div>
       </div>
     </div>
@@ -645,6 +645,54 @@ body.mobile-layout .topic-grid{grid-template-columns:repeat(2,1fr)}
   </div>
 </div>
 
+<!-- MODAL RESULTADO SCANNER -->
+<div class="modal" id="scanner-result-modal">
+  <div class="modal-box" style="max-width:480px;padding:0;overflow:hidden">
+    <div id="srm-header" style="padding:18px 20px 14px;border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+        <div id="srm-materia-badge" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:var(--accent)20;color:var(--accent);border:1px solid var(--accent)40">Física</div>
+        <div id="srm-nivel-badge" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:var(--bg3);color:var(--text3);border:1px solid var(--border)">Intermedio</div>
+      </div>
+      <div id="srm-tema" style="font-size:18px;font-weight:700;color:var(--text)"></div>
+      <div id="srm-subtema" style="font-size:13px;color:var(--text2);margin-top:2px"></div>
+    </div>
+    <div style="padding:16px 20px;max-height:340px;overflow-y:auto">
+      <div style="font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Explicación</div>
+      <div id="srm-explicacion" style="font-size:14px;color:var(--text);line-height:1.7;margin-bottom:16px"></div>
+      <div id="srm-solucion-wrap" style="display:none">
+        <div style="font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Solución paso a paso</div>
+        <div id="srm-solucion" style="font-size:13px;color:var(--text);line-height:1.8;background:var(--bg3);border-radius:10px;padding:12px 14px;white-space:pre-wrap"></div>
+      </div>
+    </div>
+    <!-- Modos extra -->
+    <div style="padding:14px 20px;border-top:1px solid var(--border);background:var(--bg2)">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:10px;text-align:center">¿Qué quieres hacer?</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px">
+        <button onclick="modoScanner('examen')" style="padding:9px 6px;border-radius:10px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;font-size:12px;font-family:var(--sans);transition:all .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)'">🎯 Examen</button>
+        <button onclick="modoScanner('resumen')" style="padding:9px 6px;border-radius:10px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;font-size:12px;font-family:var(--sans);transition:all .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)'">📝 Resumen</button>
+        <button onclick="modoScanner('dudas')" style="padding:9px 6px;border-radius:10px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;font-size:12px;font-family:var(--sans);transition:all .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)'">💬 Dudas</button>
+        <button onclick="closeModal('scanner-result-modal')" style="padding:9px 6px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-size:12px;font-family:var(--sans)">⏭ Cerrar</button>
+      </div>
+      <div id="srm-modo-resultado" style="margin-top:12px;display:none;background:var(--bg3);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--text);line-height:1.7;max-height:200px;overflow-y:auto;white-space:pre-wrap"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DUDAS SCANNER -->
+<div class="modal" id="scanner-chat-modal">
+  <div class="modal-box" style="max-width:440px;padding:0;overflow:hidden">
+    <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:15px;font-weight:600">💬 Chat de dudas</div>
+      <button onclick="closeModal('scanner-chat-modal')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px">✕</button>
+    </div>
+    <div id="scanner-chat-msgs" style="height:300px;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px"></div>
+    <div style="padding:10px 12px;border-top:1px solid var(--border);display:flex;gap:8px">
+      <input id="scanner-chat-inp" class="finp" placeholder="Escribe tu pregunta..." onkeydown="if(event.key==='Enter') enviarChatScanner()" style="flex:1;margin:0"/>
+      <button onclick="enviarChatScanner()" style="padding:9px 16px;background:var(--accent);color:white;border:none;border-radius:9px;cursor:pointer;font-size:14px">➤</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script type="module">
@@ -653,6 +701,9 @@ import {
   getFirestore, collection, doc, addDoc, setDoc, getDoc, getDocs,
   deleteDoc, onSnapshot, query, orderBy, serverTimestamp, updateDoc
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import {
+  getStorage, ref as storageRef, uploadBytes, getDownloadURL
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 
 const AUTO_CFG = {
   apiKey: "AIzaSyDtd0HQ4Y6McsWUAgl7gZOCcHDhH9hNsqo",
@@ -663,7 +714,7 @@ const AUTO_CFG = {
   appId: "1:826536469130:web:b995b889bff0e13e678373"
 };
 
-let db=null, currentUser=null, currentCourseId=null, currentTopicId=null;
+let db=null, storage=null, currentUser=null, currentCourseId=null, currentTopicId=null;
 let currentTopicName='', editingDayId=null, currentContentType='html', editingContentId=null;
 let unsubs=[], allCourses=[], allTopics={}, allContent={}, allUsers=[];
 let schedules={};
@@ -705,6 +756,7 @@ function initLayout(){
 async function initFB(cfg){
   const app = initializeApp(cfg);
   db = getFirestore(app);
+  storage = getStorage(app);
   await getDoc(doc(db,'config','app'));
 }
 async function initDefaultData(){
@@ -1381,6 +1433,7 @@ window.showTab=(tab)=>{
   document.getElementById('tab-'+tab).classList.add('active');
   if(tab==='topics') renderTopicsView();
   if(tab==='schedule') renderSchedule();
+  if(tab==='scanner') renderScanner();
   if(tab==='admin'){ loadUsers(); renderAdminTab(); }
 };
 
@@ -1606,6 +1659,373 @@ window.guardarColorTopic=async()=>{
   }catch(e){ toast('Error: '+e.message,true); }
 };
 
+// ═══════════════════════════════════════
+// SCANNER IA
+// ═══════════════════════════════════════
+let scannerAnalisis = null;
+let scannerImagenBase64 = null;
+
+function renderScanner(){
+  const el = document.getElementById('scanner-content');
+  const isAdmin = currentUser.role === 'admin';
+  el.innerHTML = `
+    <div style="max-width:520px;margin:0 auto;padding:20px 16px">
+      ${isAdmin ? renderScannerAdmin() : renderScannerAlumno()}
+    </div>`;
+  if(isAdmin) cargarHistorialScanner();
+}
+
+function renderScannerAlumno(){
+  return `
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="font-size:40px;margin-bottom:8px">📷</div>
+      <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px">Scanner IA</div>
+      <div style="font-size:13px;color:var(--text2)">Sube una foto de tu apunte y la IA lo analiza</div>
+    </div>
+    <div id="scanner-drop" style="border:2px dashed var(--border2);border-radius:16px;padding:32px 20px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:16px"
+      onclick="document.getElementById('scanner-file-inp').click()"
+      ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
+      ondragleave="this.style.borderColor='var(--border2)'"
+      ondrop="handleScannerDrop(event)">
+      <div style="font-size:36px;margin-bottom:8px">📸</div>
+      <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px">Arrastra tu foto aquí</div>
+      <div style="font-size:12px;color:var(--text3)">o toca para abrir galería / cámara</div>
+      <input type="file" id="scanner-file-inp" accept="image/*" capture="environment" style="display:none" onchange="handleScannerFile(this.files[0])"/>
+    </div>
+    <div id="scanner-preview-wrap" style="display:none;margin-bottom:16px;text-align:center">
+      <img id="scanner-preview-img" style="max-width:100%;max-height:260px;border-radius:12px;border:1px solid var(--border)"/>
+      <div style="margin-top:10px;display:flex;gap:8px;justify-content:center">
+        <button onclick="analizarFoto()" id="btn-analizar" style="padding:12px 28px;background:var(--accent);color:white;border:none;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;font-family:var(--sans)">🤖 Analizar con IA</button>
+        <button onclick="resetScanner()" style="padding:12px 16px;background:var(--bg3);color:var(--text2);border:1px solid var(--border2);border-radius:10px;cursor:pointer;font-size:14px;font-family:var(--sans)">✕</button>
+      </div>
+    </div>
+    <div id="scanner-loading" style="display:none;text-align:center;padding:24px">
+      <div style="font-size:28px;margin-bottom:8px;animation:spin 1s linear infinite">⚙️</div>
+      <div style="font-size:14px;color:var(--text2)" id="scanner-loading-txt">Analizando imagen...</div>
+    </div>
+    <div style="margin-top:24px">
+      <div style="font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:12px">Mis análisis recientes</div>
+      <div id="scanner-historial-alumno"></div>
+    </div>`;
+}
+
+function renderScannerAdmin(){
+  return `
+    <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:16px">📷 Historial Scanner</div>
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <select id="scan-filtro-curso" onchange="cargarHistorialScanner()" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 10px;color:var(--text);font-family:var(--sans);font-size:13px">
+        <option value="">Todos los cursos</option>
+        <option>Física</option><option>Matemática</option><option>Química</option>
+      </select>
+    </div>
+    <div id="scanner-historial-admin"></div>`;
+}
+
+// ── Manejo de archivo ──────────────────
+function handleScannerDrop(e){
+  e.preventDefault();
+  document.getElementById('scanner-drop').style.borderColor='var(--border2)';
+  const f = e.dataTransfer.files[0];
+  if(f&&f.type.startsWith('image/')) handleScannerFile(f);
+}
+
+async function handleScannerFile(file){
+  if(!file) return;
+  const comp = await comprimirImagen(file);
+  scannerImagenBase64 = comp.split(',')[1];
+  document.getElementById('scanner-preview-img').src = comp;
+  document.getElementById('scanner-preview-wrap').style.display = 'block';
+  document.getElementById('scanner-drop').style.display = 'none';
+}
+
+function resetScanner(){
+  scannerImagenBase64 = null;
+  document.getElementById('scanner-preview-wrap').style.display = 'none';
+  document.getElementById('scanner-drop').style.display = 'block';
+  document.getElementById('scanner-file-inp').value = '';
+}
+
+// ── Comprimir imagen ───────────────────
+function comprimirImagen(file){
+  return new Promise(resolve=>{
+    const img = new Image();
+    const canvas = document.createElement('canvas');
+    img.onload = ()=>{
+      const maxW = 1200;
+      const scale = Math.min(1, maxW/img.width);
+      canvas.width = img.width*scale;
+      canvas.height = img.height*scale;
+      canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+      resolve(canvas.toDataURL('image/jpeg',0.72));
+    };
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+// ── Hash SHA256 ────────────────────────
+async function calcularHash(b64){
+  const bytes = Uint8Array.from(atob(b64),c=>c.charCodeAt(0));
+  const buf = await crypto.subtle.digest('SHA-256',bytes);
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+// ── Analizar foto ──────────────────────
+async function analizarFoto(){
+  if(!scannerImagenBase64){ toast('Selecciona una imagen primero',true); return; }
+  const btnA = document.getElementById('btn-analizar');
+  btnA.disabled = true;
+  document.getElementById('scanner-loading').style.display = 'block';
+  document.getElementById('scanner-preview-wrap').style.display = 'none';
+  setLoadingTxt('Calculando huella digital...');
+
+  try{
+    // 1. Hash anti-duplicados
+    const hash = await calcularHash(scannerImagenBase64);
+    setLoadingTxt('Verificando duplicados...');
+    const hashSnap = await getDoc(doc(db,'scanner_hashes',hash));
+
+    if(hashSnap.exists()){
+      const d = hashSnap.data();
+      document.getElementById('scanner-loading').style.display = 'none';
+      mostrarDuplicado(d);
+      return;
+    }
+
+    // 2. Enviar a Gemini
+    setLoadingTxt('La IA está analizando tu imagen...');
+    const prompt = `Analiza esta imagen de un apunte universitario de ingeniería. 
+Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin backticks, con esta estructura exacta:
+{
+  "materia": "Física" o "Matemática" o "Química" o "Otro",
+  "tema": "nombre del tema principal",
+  "subtema": "subtema específico",
+  "nivel": "básico" o "intermedio" o "avanzado",
+  "explicacion": "explicación clara en 3-4 oraciones del tema",
+  "tiene_ejercicio": true o false,
+  "solucion": "solución detallada paso a paso si hay ejercicio, vacío si no hay"
+}`;
+
+    const geminiRes = await fetch(GEMINI_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[
+        {inline_data:{mime_type:'image/jpeg',data:scannerImagenBase64}},
+        {text:prompt}
+      ]}]})
+    });
+    const geminiData = await geminiRes.json();
+    const rawTxt = geminiData.candidates?.[0]?.content?.parts?.[0]?.text||'{}';
+    const limpio = rawTxt.replace(/```json|```/g,'').trim();
+    const analisis = JSON.parse(limpio);
+
+    // 3. Subir foto a Firebase Storage
+    setLoadingTxt('Guardando en Firebase...');
+    const alumno = currentUser.name||'alumno';
+    const materia = analisis.materia||'Otro';
+    const tema = (analisis.tema||'sin-tema').replace(/\s+/g,'-').toLowerCase();
+    const fecha = new Date().toISOString().slice(0,10);
+    const nombreArchivo = `${tema}_${fecha}_${Date.now()}.jpg`;
+    const path = `scanner/${alumno}/${materia}/${nombreArchivo}`;
+
+    const bytes = Uint8Array.from(atob(scannerImagenBase64),c=>c.charCodeAt(0));
+    const blob = new Blob([bytes],{type:'image/jpeg'});
+    const fRef = storageRef(storage, path);
+    await uploadBytes(fRef, blob);
+    const fotoUrl = await getDownloadURL(fRef);
+
+    // 4. Guardar en Firestore
+    const registro = {
+      hash, alumno, alumnoId: currentUser.id,
+      materia, tema: analisis.tema||'', subtema: analisis.subtema||'',
+      nivel: analisis.nivel||'', explicacion: analisis.explicacion||'',
+      tieneEjercicio: analisis.tiene_ejercicio||false,
+      solucion: analisis.solucion||'',
+      fotoUrl, fecha: new Date().toISOString(),
+      createdAt: serverTimestamp()
+    };
+    await setDoc(doc(db,'scanner_hashes',hash), registro);
+    await addDoc(collection(db,`scanner_historial/${currentUser.id}/fotos`), registro);
+
+    scannerAnalisis = analisis;
+    document.getElementById('scanner-loading').style.display = 'none';
+    mostrarResultado(analisis);
+    cargarHistorialAlumno();
+    toast('Análisis completado');
+
+  }catch(e){
+    document.getElementById('scanner-loading').style.display = 'none';
+    document.getElementById('scanner-preview-wrap').style.display = 'block';
+    toast('Error: '+e.message, true);
+    console.error(e);
+  }
+  btnA.disabled = false;
+}
+
+function setLoadingTxt(t){ const el=document.getElementById('scanner-loading-txt'); if(el) el.textContent=t; }
+
+// ── Mostrar resultado ──────────────────
+function mostrarResultado(a){
+  const colores = {Física:'#3ecf8e',Matemática:'#6c63ff',Química:'#f97316',Otro:'#8b8fa8'};
+  const c = colores[a.materia]||'#6c63ff';
+  const mb = document.getElementById('srm-materia-badge');
+  mb.textContent = a.materia; mb.style.background=c+'20'; mb.style.color=c; mb.style.borderColor=c+'40';
+  document.getElementById('srm-nivel-badge').textContent = a.nivel||'';
+  document.getElementById('srm-tema').textContent = a.tema||'';
+  document.getElementById('srm-subtema').textContent = a.subtema||'';
+  document.getElementById('srm-explicacion').textContent = a.explicacion||'';
+  const sw = document.getElementById('srm-solucion-wrap');
+  if(a.tiene_ejercicio && a.solucion){
+    document.getElementById('srm-solucion').textContent = a.solucion;
+    sw.style.display = 'block';
+  } else { sw.style.display='none'; }
+  document.getElementById('srm-modo-resultado').style.display='none';
+  openModal('scanner-result-modal');
+}
+
+function mostrarDuplicado(d){
+  const html = `
+    <div style="background:var(--bg2);border:1px solid #f59e0b40;border-radius:14px;padding:20px;text-align:center">
+      <div style="font-size:32px;margin-bottom:10px">📸</div>
+      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">Esta imagen ya fue analizada</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:14px">
+        Por: <b>${d.alumno}</b> · ${d.fecha?.slice(0,10)||''}<br>
+        Curso: <b>${d.materia}</b> · Tema: <b>${d.tema}</b>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:center">
+        <button onclick="mostrarResultado(${JSON.stringify(d).replace(/"/g,'&quot;')})" style="padding:10px 20px;background:var(--accent);color:white;border:none;border-radius:9px;cursor:pointer;font-size:13px;font-weight:600;font-family:var(--sans)">Ver análisis anterior</button>
+        <button onclick="resetScanner()" style="padding:10px 16px;background:var(--bg3);color:var(--text2);border:1px solid var(--border2);border-radius:9px;cursor:pointer;font-size:13px;font-family:var(--sans)">Analizar de nuevo</button>
+      </div>
+    </div>`;
+  document.getElementById('scanner-preview-wrap').innerHTML = html;
+  document.getElementById('scanner-preview-wrap').style.display = 'block';
+}
+
+// ── Modos extra ────────────────────────
+async function modoScanner(modo){
+  if(!scannerAnalisis){ toast('Primero analiza una imagen',true); return; }
+  const res = document.getElementById('srm-modo-resultado');
+  res.style.display='block'; res.textContent='⏳ Generando...';
+  let prompt = '';
+  if(modo==='examen') prompt=`Basándote en el tema "${scannerAnalisis.tema}" de ${scannerAnalisis.materia}, genera 5 preguntas de opción múltiple de nivel universitario con sus respuestas correctas marcadas. Formato claro y numerado.`;
+  if(modo==='resumen') prompt=`Convierte en un resumen académico limpio y organizado el siguiente tema de ${scannerAnalisis.materia}: "${scannerAnalisis.tema} - ${scannerAnalisis.subtema}". Incluye definiciones, fórmulas clave y puntos importantes. Formato claro con secciones.`;
+  if(modo==='dudas'){
+    closeModal('scanner-result-modal');
+    abrirChatScanner();
+    return;
+  }
+  try{
+    const r = await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})});
+    const d = await r.json();
+    res.textContent = d.candidates?.[0]?.content?.parts?.[0]?.text||'Sin respuesta';
+  }catch(e){ res.textContent='Error al conectar con la IA'; }
+}
+
+// ── Chat de dudas ──────────────────────
+let scannerChatHistory = [];
+
+function abrirChatScanner(){
+  scannerChatHistory = [];
+  const msgs = document.getElementById('scanner-chat-msgs');
+  msgs.innerHTML = `<div style="background:var(--bg3);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--text2);align-self:flex-start">Hola! Puedo ayudarte con <b>${scannerAnalisis?.tema||'el tema'}</b>. ¿Qué dudas tienes?</div>`;
+  openModal('scanner-chat-modal');
+}
+
+async function enviarChatScanner(){
+  const inp = document.getElementById('scanner-chat-inp');
+  const txt = inp.value.trim();
+  if(!txt) return;
+  inp.value='';
+  const msgs = document.getElementById('scanner-chat-msgs');
+  msgs.innerHTML += `<div style="background:var(--accent);color:white;border-radius:10px;padding:8px 12px;font-size:13px;align-self:flex-end;max-width:85%">${txt}</div>`;
+  msgs.scrollTop=99999;
+  scannerChatHistory.push({role:'user',parts:[{text:txt}]});
+  const sysTxt = `Eres un asistente de ${scannerAnalisis?.materia||'física'} universitaria. El estudiante está estudiando "${scannerAnalisis?.tema}" - "${scannerAnalisis?.subtema}". Responde de forma clara y concisa en español.`;
+  try{
+    const r = await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({system_instruction:{parts:[{text:sysTxt}]},contents:scannerChatHistory})});
+    const d = await r.json();
+    const reply = d.candidates?.[0]?.content?.parts?.[0]?.text||'No pude responder.';
+    scannerChatHistory.push({role:'model',parts:[{text:reply}]});
+    msgs.innerHTML+=`<div style="background:var(--bg3);border-radius:10px;padding:8px 12px;font-size:13px;color:var(--text);align-self:flex-start;max-width:90%;white-space:pre-wrap">${reply}</div>`;
+    msgs.scrollTop=99999;
+  }catch(e){ msgs.innerHTML+=`<div style="color:var(--red);font-size:13px">Error de conexión</div>`; }
+}
+
+// ── Historial alumno ───────────────────
+async function cargarHistorialAlumno(){
+  const el = document.getElementById('scanner-historial-alumno');
+  if(!el) return;
+  try{
+    const snap = await getDocs(collection(db,`scanner_historial/${currentUser.id}/fotos`));
+    if(snap.empty){ el.innerHTML=`<div style="text-align:center;font-size:13px;color:var(--text3);padding:16px">Aún no has analizado ninguna imagen</div>`; return; }
+    const items = [];
+    snap.forEach(d=>items.push({id:d.id,...d.data()}));
+    items.sort((a,b)=>b.fecha>a.fecha?1:-1);
+    el.innerHTML = items.slice(0,5).map(item=>`
+      <div onclick='mostrarResultadoHistorial(${JSON.stringify(item)})' style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+        <img src="${item.fotoUrl||''}" style="width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;background:var(--bg3)"/>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.tema||'Sin tema'}</div>
+          <div style="font-size:11px;color:var(--text3)">${item.materia} · ${item.fecha?.slice(0,10)||''}</div>
+        </div>
+        <div style="font-size:11px;padding:2px 8px;border-radius:6px;background:var(--bg3);color:var(--text3);white-space:nowrap">${item.nivel||''}</div>
+      </div>`).join('');
+  }catch(e){ console.error(e); }
+}
+
+window.mostrarResultadoHistorial=(item)=>{
+  scannerAnalisis = item;
+  mostrarResultado(item);
+};
+
+// ── Historial admin ────────────────────
+async function cargarHistorialScanner(){
+  const el = document.getElementById('scanner-historial-admin');
+  if(!el) return;
+  el.innerHTML=`<div style="text-align:center;font-size:13px;color:var(--text3);padding:16px">Cargando...</div>`;
+  const filtro = document.getElementById('scan-filtro-curso')?.value||'';
+  try{
+    const snap = await getDocs(collection(db,'scanner_hashes'));
+    if(snap.empty){ el.innerHTML=`<div style="text-align:center;font-size:13px;color:var(--text3);padding:16px">Sin análisis aún</div>`; return; }
+    const todos = [];
+    snap.forEach(d=>todos.push({id:d.id,...d.data()}));
+    const filtrados = filtro ? todos.filter(x=>x.materia===filtro) : todos;
+    filtrados.sort((a,b)=>b.fecha>a.fecha?1:-1);
+    // Agrupar por alumno
+    const porAlumno = {};
+    filtrados.forEach(item=>{
+      const k = item.alumnoId||item.alumno;
+      if(!porAlumno[k]) porAlumno[k]={nombre:item.alumno,items:{}};
+      const mat = item.materia||'Otro';
+      if(!porAlumno[k].items[mat]) porAlumno[k].items[mat]=[];
+      porAlumno[k].items[mat].push(item);
+    });
+    el.innerHTML = Object.entries(porAlumno).map(([uid,data])=>`
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden">
+        <div style="padding:12px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)">
+          <div style="width:32px;height:32px;border-radius:50%;background:var(--accent)20;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">👤</div>
+          <div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--text)">${data.nombre}</div><div style="font-size:11px;color:var(--text3)">${Object.values(data.items).flat().length} foto(s)</div></div>
+        </div>
+        ${Object.entries(data.items).map(([mat,fotos])=>`
+          <div style="padding:10px 14px;border-bottom:1px solid var(--border)">
+            <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px">📁 ${mat} · ${fotos.length} foto(s)</div>
+            ${fotos.map(f=>`
+              <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--border)" onclick='mostrarResultadoHistorial(${JSON.stringify(f)})' style="cursor:pointer">
+                <img src="${f.fotoUrl||''}" style="width:38px;height:38px;border-radius:6px;object-fit:cover;background:var(--bg3);flex-shrink:0"/>
+                <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.tema||''}</div><div style="font-size:11px;color:var(--text3)">${f.fecha?.slice(0,10)||''} · ${f.nivel||''}</div></div>
+                <button style="font-size:11px;padding:3px 8px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer" onclick="event.stopPropagation();mostrarResultadoHistorial(${JSON.stringify(f).replace(/"/g,'&quot;')})">Ver</button>
+              </div>`).join('')}
+          </div>`).join('')}
+      </div>`).join('');
+  }catch(e){ el.innerHTML=`<div style="color:var(--red);font-size:13px;padding:16px">Error al cargar</div>`; console.error(e); }
+}
+
+// CSS spinner
+const spinStyle = document.createElement('style');
+spinStyle.textContent = `@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}`;
+document.head.appendChild(spinStyle);
+
 // TOAST
 window.toast=(msg,isErr=false)=>{
   const t=document.getElementById('toast');
@@ -1666,7 +2086,7 @@ window.toast=(msg,isErr=false)=>{
 </div>
 
 <script>
-const GEMINI_KEY = 'TU_API_KEY_AQUI';
+const GEMINI_KEY = 'AQ.Ab8RN6JdR3a2fsTXE9FlOE2AAJq86hHJ6eLNKg0jhg0bAQ3CQQ';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`;
 const chatHistory = [];
 
