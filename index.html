@@ -405,9 +405,11 @@ body.mobile-layout .topic-grid{grid-template-columns:repeat(2,1fr)}
       <button class="install-banner-btn">Instalar</button>
     </div>
     <div class="auth-card">
-      <label class="lbl">Contraseña de acceso</label>
+      <label class="lbl">Nombre</label>
+      <input type="text" class="inp" id="login-name" placeholder="Escribe tu nombre" onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()" autocomplete="off" style="margin-bottom:14px">
+      <label class="lbl">Contraseña</label>
       <input type="password" class="inp inp-pass" id="login-pass" placeholder="Ingresa tu clave" onkeydown="if(event.key==='Enter')doLogin()">
-      <div class="err-box" id="login-err">Contraseña incorrecta.</div>
+      <div class="err-box" id="login-err">Nombre o contraseña incorrectos.</div>
       <button class="primary-btn" id="login-btn" onclick="doLogin()">Entrar →</button>
     </div>
   </div>
@@ -824,6 +826,7 @@ function showScreen(id){
 
 // LOGIN
 window.doLogin = async () => {
+  const nombre = (document.getElementById('login-name')?.value||'').trim().toLowerCase();
   const pass = document.getElementById('login-pass').value;
   const err = document.getElementById('login-err');
   const btn = document.getElementById('login-btn');
@@ -832,19 +835,30 @@ window.doLogin = async () => {
   try {
     const cfgSnap = await getDoc(doc(db,'config','app'));
     const cfg = cfgSnap.data()||{};
+    // Admin: no requiere nombre, solo contraseña de admin
     if(pass===cfg.passAdmin){
       currentUser={id:'admin',name:'Administrador',role:'admin',courses:[]};
       enterApp();
     } else {
+      // Buscar alumno por nombre + contraseña
       const usersSnap = await getDocs(collection(db,'users'));
       let found=null;
-      usersSnap.forEach(d=>{ const u=d.data(); if(u.pass===pass) found={id:d.id,...u}; });
+      usersSnap.forEach(d=>{
+        const u=d.data();
+        const nombreDB = (u.name||'').trim().toLowerCase();
+        // Coincide si el nombre ingresado aparece en el nombre del usuario
+        if(u.pass===pass && (nombreDB===nombre || nombreDB.includes(nombre) || nombre.includes(nombreDB.split(' ')[0]))){
+          found={id:d.id,...u};
+        }
+      });
       if(found){ currentUser={...found,role:'student'}; showWelcome(); }
       else err.classList.add('show');
     }
   } catch(e){ err.textContent='Error: '+e.message; err.classList.add('show'); }
   btn.disabled=false; btn.textContent='Entrar →';
   document.getElementById('login-pass').value='';
+  const nameInp = document.getElementById('login-name');
+  if(nameInp) nameInp.value='';
 };
 
 // WELCOME
