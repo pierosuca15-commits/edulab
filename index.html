@@ -720,6 +720,11 @@ const AUTO_CFG = {
   appId: "1:826536469130:web:b995b889bff0e13e678373"
 };
 
+// ── Gemini ──────────────────────────────
+const GEMINI_KEY = 'AIzaSyDtd0HQ4Y6McsWUAgl7gZOCcHDhH9hNsqo';
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`;
+window.GEMINI_URL = GEMINI_URL;
+
 let db=null, storage=null, currentUser=null, currentCourseId=null, currentTopicId=null;
 let currentTopicName='', editingDayId=null, currentContentType='html', editingContentId=null;
 let unsubs=[], allCourses=[], allTopics={}, allContent={}, allUsers=[];
@@ -1719,7 +1724,7 @@ function renderScannerAlumno(){
       </div>
     </div>
     <div id="scanner-loading" style="display:none;text-align:center;padding:24px">
-      <div style="font-size:28px;margin-bottom:8px;animation:spin 1s linear infinite">⚙️</div>
+      <div style="width:40px;height:40px;border:3px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px"></div>
       <div style="font-size:14px;color:var(--text2)" id="scanner-loading-txt">Analizando imagen...</div>
     </div>
     <div style="margin-top:24px">
@@ -1839,17 +1844,20 @@ window.analizarFoto = async function analizarFoto(){
 
     // 2. Enviar a Gemini
     setLoadingTxt('La IA está analizando tu imagen...');
-    const prompt = `Analiza esta imagen de un apunte universitario de ingeniería. 
-Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin backticks, con esta estructura exacta:
-{
-  "materia": "Física" o "Matemática" o "Química" o "Otro",
-  "tema": "nombre del tema principal",
-  "subtema": "subtema específico",
-  "nivel": "básico" o "intermedio" o "avanzado",
-  "explicacion": "explicación clara en 3-4 oraciones del tema",
-  "tiene_ejercicio": true o false,
-  "solucion": "solución detallada paso a paso si hay ejercicio, vacío si no hay"
-}`;
+    const prompt = `Analiza esta imagen de un apunte o ejercicio universitario de ingeniería.
+IMPORTANTE: Responde SOLO con el JSON a continuación, sin ningún texto antes ni después, sin bloques de código, sin explicaciones adicionales.
+{"materia":"Física","tema":"torque y equilibrio","subtema":"suma de momentos","nivel":"intermedio","explicacion":"Breve descripción del tema en 2-3 oraciones.","tiene_ejercicio":false,"solucion":""}
+
+Ahora analiza la imagen real y devuelve el JSON con estos campos:
+- materia: exactamente "Física", "Matemática", "Química" o "Otro"
+- tema: nombre del tema principal identificado
+- subtema: subtema o concepto específico
+- nivel: "básico", "intermedio" o "avanzado"
+- explicacion: explicación académica en 3-4 oraciones
+- tiene_ejercicio: true si hay un ejercicio o problema numérico, false si es solo teoría
+- solucion: si tiene_ejercicio es true, escribe la solución paso a paso; si es false, deja vacío ""
+
+Responde ÚNICAMENTE con el JSON, nada más.`;
 
     const geminiRes = await fetch(GEMINI_URL,{
       method:'POST',
@@ -1860,9 +1868,20 @@ Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin backti
       ]}]})
     });
     const geminiData = await geminiRes.json();
+    // Debug: ver respuesta completa si hay error
+    if(geminiData.error){ throw new Error('Gemini API: ' + geminiData.error.message); }
     const rawTxt = geminiData.candidates?.[0]?.content?.parts?.[0]?.text||'{}';
-    const limpio = rawTxt.replace(/```json|```/g,'').trim();
-    const analisis = JSON.parse(limpio);
+    // Limpiar posibles bloques markdown y extraer solo el JSON
+    let limpio = rawTxt.replace(/```json\s*/gi,'').replace(/```/g,'').trim();
+    // Si Gemini metió texto antes del JSON, extraer solo el objeto {}
+    const matchJson = limpio.match(/\{[\s\S]*\}/);
+    if(matchJson) limpio = matchJson[0];
+    let analisis;
+    try{ analisis = JSON.parse(limpio); }
+    catch(parseErr){
+      console.error('JSON parse error. Raw text:', rawTxt);
+      throw new Error('La IA no devolvió JSON válido. Intenta con otra imagen.');
+    }
 
     // 3. Subir foto a Firebase Storage
     setLoadingTxt('Guardando en Firebase...');
@@ -1920,8 +1939,11 @@ window.mostrarResultado = function mostrarResultado(a){
   document.getElementById('srm-subtema').textContent = a.subtema||'';
   document.getElementById('srm-explicacion').textContent = a.explicacion||'';
   const sw = document.getElementById('srm-solucion-wrap');
-  if(a.tiene_ejercicio && a.solucion){
-    document.getElementById('srm-solucion').textContent = a.solucion;
+  // Compatibilidad: Firestore guarda como tieneEjercicio, análisis fresco como tiene_ejercicio
+  const tieneEj = a.tiene_ejercicio || a.tieneEjercicio || false;
+  const sol = a.solucion || '';
+  if(tieneEj && sol){
+    document.getElementById('srm-solucion').textContent = sol;
     sw.style.display = 'block';
   } else { sw.style.display='none'; }
   document.getElementById('srm-modo-resultado').style.display='none';
@@ -1960,11 +1982,15 @@ window.modoScanner = async function modoScanner(modo){
     return;
   }
   try{
-    const r = await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+    const url = window.GEMINI_URL || GEMINI_URL;
+    const r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})});
     const d = await r.json();
-    res.textContent = d.candidates?.[0]?.content?.parts?.[0]?.text||'Sin respuesta';
-  }catch(e){ res.textContent='Error al conectar con la IA'; }
+    if(d.error){ res.textContent = 'Error API: ' + d.error.message; return; }
+    const txt = d.candidates?.[0]?.content?.parts?.[0]?.text||'Sin respuesta';
+    res.textContent = txt;
+    res.style.whiteSpace='pre-wrap';
+  }catch(e){ res.textContent='Error al conectar con la IA: ' + e.message; }
 }
 
 // ── Chat de dudas ──────────────────────
@@ -1986,16 +2012,33 @@ window.enviarChatScanner = async function enviarChatScanner(){
   msgs.innerHTML += `<div style="background:var(--accent);color:white;border-radius:10px;padding:8px 12px;font-size:13px;align-self:flex-end;max-width:85%">${txt}</div>`;
   msgs.scrollTop=99999;
   scannerChatHistory.push({role:'user',parts:[{text:txt}]});
-  const sysTxt = `Eres un asistente de ${scannerAnalisis?.materia||'física'} universitaria. El estudiante está estudiando "${scannerAnalisis?.tema}" - "${scannerAnalisis?.subtema}". Responde de forma clara y concisa en español.`;
+  const sysTxt = `Eres un asistente académico de ingeniería universitaria especializado en ${scannerAnalisis?.materia||'Física'}. El estudiante está estudiando el tema: "${scannerAnalisis?.tema||'ingeniería'}" (${scannerAnalisis?.subtema||''}). Explica de forma clara, usa ejemplos si ayuda, y responde siempre en español.`;
+  // Construir historial con system prompt como primer turno user+model (compatible con Gemini Flash)
+  const historialCompleto = [
+    {role:'user', parts:[{text: sysTxt + '\n\nConfirma que entendiste tu rol respondiendo: "Listo, puedo ayudarte con ' + (scannerAnalisis?.tema||'el tema') + '."'}]},
+    {role:'model', parts:[{text: 'Listo, puedo ayudarte con ' + (scannerAnalisis?.tema||'el tema') + '.'}]},
+    ...scannerChatHistory
+  ];
+  // Indicador de "escribiendo"
+  const botTyping = document.createElement('div');
+  botTyping.style.cssText = 'background:var(--bg3);border-radius:10px;padding:8px 12px;font-size:13px;color:var(--text3);align-self:flex-start;font-style:italic';
+  botTyping.textContent = '⏳ Escribiendo...';
+  msgs.appendChild(botTyping);
+  msgs.scrollTop=99999;
   try{
-    const r = await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({system_instruction:{parts:[{text:sysTxt}]},contents:scannerChatHistory})});
+    const url = window.GEMINI_URL || GEMINI_URL;
+    const r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:historialCompleto})});
     const d = await r.json();
+    if(d.error){ botTyping.style.color='var(--red)'; botTyping.textContent='Error API: '+d.error.message; return; }
     const reply = d.candidates?.[0]?.content?.parts?.[0]?.text||'No pude responder.';
     scannerChatHistory.push({role:'model',parts:[{text:reply}]});
-    msgs.innerHTML+=`<div style="background:var(--bg3);border-radius:10px;padding:8px 12px;font-size:13px;color:var(--text);align-self:flex-start;max-width:90%;white-space:pre-wrap">${reply}</div>`;
+    botTyping.style.color='var(--text)';
+    botTyping.style.fontStyle='normal';
+    botTyping.style.whiteSpace='pre-wrap';
+    botTyping.textContent = reply;
     msgs.scrollTop=99999;
-  }catch(e){ msgs.innerHTML+=`<div style="color:var(--red);font-size:13px">Error de conexión</div>`; }
+  }catch(e){ botTyping.style.color='var(--red)'; botTyping.textContent='Error de conexión: '+e.message; }
 }
 
 // ── Historial alumno ───────────────────
@@ -2143,8 +2186,8 @@ window.toast=(msg,isErr=false)=>{
 </div>
 
 <script>
-const GEMINI_KEY = 'AQ.Ab8RN6IZ4IhWgYxKg-A5fDrIbmuke3FcQvRIL1bX19gyIXzrOQ';
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`;
+// La GEMINI_KEY real se define en el módulo de arriba como window.GEMINI_KEY
+// Usamos la misma key y URL que el scanner (definidas en el módulo ES)
 const chatHistory = [];
 
 function toggleChat(){
@@ -2170,9 +2213,32 @@ async function sendChat(){
   if(!text) return;
   inp.value = '';
   addMsg(text, 'user');
-  setTimeout(()=>{
-    addMsg('🚀 Próximamente... Esta función estará disponible muy pronto.', 'bot');
-  }, 600);
+  chatHistory.push({role:'user', parts:[{text}]});
+  const sendBtn = document.getElementById('chat-send');
+  sendBtn.disabled = true;
+  const typing = addMsg('⏳ Escribiendo...', 'bot typing');
+  try{
+    const url = window.GEMINI_URL;
+    if(!url){ typing.textContent = 'Error: API no inicializada.'; sendBtn.disabled=false; return; }
+    const sysTxt = 'Eres un asistente académico de ingeniería universitaria (Física, Matemática, Química). Responde en español de forma clara y concisa.';
+    const r = await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        system_instruction:{parts:[{text:sysTxt}]},
+        contents: chatHistory
+      })
+    });
+    const d = await r.json();
+    if(d.error){ typing.textContent = 'Error API: ' + d.error.message; sendBtn.disabled=false; return; }
+    const reply = d.candidates?.[0]?.content?.parts?.[0]?.text || 'No pude responder.';
+    chatHistory.push({role:'model', parts:[{text:reply}]});
+    typing.className = 'msg bot';
+    typing.textContent = reply;
+  } catch(e){
+    typing.textContent = 'Error de conexión: ' + e.message;
+  }
+  sendBtn.disabled = false;
   document.getElementById('chat-msgs').scrollTop = 99999;
 }
 </script>
