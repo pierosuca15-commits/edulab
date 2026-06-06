@@ -2008,17 +2008,28 @@ window.cargarHistorialAlumno = async function cargarHistorialAlumno(){
     const items = [];
     snap.forEach(d=>items.push({id:d.id,...d.data()}));
     items.sort((a,b)=>b.fecha>a.fecha?1:-1);
-    el.innerHTML = items.slice(0,5).map(item=>`
-      <div onclick='mostrarResultadoHistorial(${JSON.stringify(item)})' style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
-        <img src="${item.fotoUrl||''}" style="width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;background:var(--bg3)"/>
-        <div style="flex:1;min-width:0">
+    el.innerHTML = items.slice(0,10).map(item=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;transition:all .15s">
+        <img src="${item.fotoUrl||''}" onclick='mostrarResultadoHistorial(${JSON.stringify(item).replace(/'/g,"&#39;")})' style="width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;background:var(--bg3);cursor:pointer"/>
+        <div style="flex:1;min-width:0;cursor:pointer" onclick='mostrarResultadoHistorial(${JSON.stringify(item).replace(/'/g,"&#39;")})'>
           <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.tema||'Sin tema'}</div>
-          <div style="font-size:11px;color:var(--text3)">${item.materia} · ${item.fecha?.slice(0,10)||''}</div>
+          <div style="font-size:11px;color:var(--text3)">${item.materia||''} · ${item.fecha?.slice(0,10)||''}</div>
         </div>
-        <div style="font-size:11px;padding:2px 8px;border-radius:6px;background:var(--bg3);color:var(--text3);white-space:nowrap">${item.nivel||''}</div>
+        <div style="font-size:11px;padding:2px 8px;border-radius:6px;background:var(--bg3);color:var(--text3);white-space:nowrap;margin-right:4px">${item.nivel||''}</div>
+        <button onclick="eliminarFotoHistorial('${item.id}','${item.hash||''}')" style="width:26px;height:26px;border-radius:50%;border:1px solid var(--border2);background:var(--bg3);color:var(--text3);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:var(--sans)">✕</button>
       </div>`).join('');
   }catch(e){ console.error(e); }
 }
+
+window.eliminarFotoHistorial = async function(docId, hash){
+  if(!confirm('¿Eliminar este análisis?')) return;
+  try{
+    await deleteDoc(doc(db,`scanner_historial/${currentUser.id}/fotos`,docId));
+    if(hash) await deleteDoc(doc(db,'scanner_hashes',hash));
+    toast('Análisis eliminado');
+    cargarHistorialAlumno();
+  }catch(e){ toast('Error al eliminar',true); }
+};
 
 window.mostrarResultadoHistorial=(item)=>{
   scannerAnalisis = item;
@@ -2132,7 +2143,7 @@ window.toast=(msg,isErr=false)=>{
 </div>
 
 <script>
-const GEMINI_KEY = 'AQ.Ab8RN6JdR3a2fsTXE9FlOE2AAJq86hHJ6eLNKg0jhg0bAQ3CQQ';
+const GEMINI_KEY = 'AQ.Ab8RN6IZ4IhWgYxKg-A5fDrIbmuke3FcQvRIL1bX19gyIXzrOQ';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`;
 const chatHistory = [];
 
