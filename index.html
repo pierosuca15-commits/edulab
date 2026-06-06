@@ -52,6 +52,34 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:15
 .welcome-enter-btn{padding:14px 36px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-family:var(--sans);font-size:16px;font-weight:600;cursor:pointer;transition:all .2s;box-shadow:0 4px 20px #6c63ff35}
 .welcome-enter-btn:hover{background:var(--accent2);transform:translateY(-1px)}
 
+/* LOGIN ANIMACIONES */
+@keyframes nave1{0%{transform:translateX(-120px)}100%{transform:translateX(105vw)}}
+@keyframes nave2{0%{transform:translateX(105vw) scaleX(-1)}100%{transform:translateX(-120px) scaleX(-1)}}
+@keyframes nave3{0%{transform:translateX(-120px)}100%{transform:translateX(105vw)}}
+@keyframes flotarM{0%,100%{transform:translateY(0px)}50%{transform:translateY(-10px)}}
+@keyframes parpL{0%,100%{opacity:1}50%{opacity:0.2}}
+@keyframes subirA{0%{transform:translateY(0px) rotate(0deg);opacity:0}10%{opacity:0.8}90%{opacity:0.8}100%{transform:translateY(-110vh) rotate(20deg);opacity:0}}
+@keyframes subirB{0%{transform:translateY(0px) rotate(-5deg);opacity:0}10%{opacity:0.8}90%{opacity:0.8}100%{transform:translateY(-110vh) rotate(-15deg);opacity:0}}
+@keyframes subirC{0%{transform:translateY(0px) rotate(8deg);opacity:0}10%{opacity:0.8}90%{opacity:0.8}100%{transform:translateY(-110vh) rotate(25deg);opacity:0}}
+@keyframes estrellaL{0%,100%{opacity:0.8}50%{opacity:0.15}}
+.lnave1{position:absolute;top:8%;left:0;pointer-events:none;z-index:1;animation:nave1 7s linear infinite}
+.lnave2{position:absolute;top:72%;right:0;pointer-events:none;z-index:1;animation:nave2 11s linear infinite 2s}
+.lnave3{position:absolute;top:45%;left:0;pointer-events:none;z-index:1;animation:nave3 15s linear infinite 5s}
+.lsym{position:absolute;font-family:var(--mono);font-weight:700;pointer-events:none;z-index:1;opacity:0}
+.ls1{bottom:-20px;left:5%;font-size:18px;color:#8b84ff;animation:subirA 8s linear infinite}
+.ls2{bottom:-20px;left:12%;font-size:14px;color:#3ecf8e;animation:subirB 11s linear infinite 1.5s}
+.ls3{bottom:-20px;left:3%;font-size:16px;color:#f59e0b;animation:subirC 9s linear infinite 3s}
+.ls4{bottom:-20px;left:18%;font-size:20px;color:#6c63ff;animation:subirA 13s linear infinite 0.5s}
+.ls5{bottom:-20px;left:8%;font-size:13px;color:#ec4899;animation:subirB 10s linear infinite 4s}
+.ls6{bottom:-20px;right:5%;font-size:18px;color:#6c63ff;animation:subirC 12s linear infinite 2s}
+.ls7{bottom:-20px;right:14%;font-size:14px;color:#3ecf8e;animation:subirA 7s linear infinite 6s}
+.ls8{bottom:-20px;right:6%;font-size:13px;color:#f59e0b;animation:subirB 14s linear infinite 1s}
+.ls9{bottom:-20px;right:18%;font-size:22px;color:#8b84ff;animation:subirC 9s linear infinite 7s}
+.ls10{bottom:-20px;right:9%;font-size:15px;color:#ec4899;animation:subirA 11s linear infinite 3.5s}
+.ls11{bottom:-20px;right:20%;font-size:13px;color:#3ecf8e;animation:subirB 10s linear infinite 5s}
+.ls12{bottom:-20px;left:22%;font-size:16px;color:#6c63ff;animation:subirC 8s linear infinite 4.5s}
+.marciano-anim{animation:flotarM 3s ease-in-out infinite}
+
 /* LOGIN */
 #login-screen{align-items:center;justify-content:center;overflow-y:auto}
 .auth-box{position:relative;z-index:1;width:100%;max-width:480px;padding:28px 22px}
@@ -390,12 +418,121 @@ body.mobile-layout .topic-grid{grid-template-columns:repeat(2,1fr)}
 
 <!-- LOGIN -->
 <div id="login-screen" class="screen">
-  <div class="bg-glow"></div><div class="bg-grid"></div>
-  <div class="auth-box">
+  <div class="bg-grid"></div>
+
+  <!-- Glow -->
+  <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:600px;height:280px;background:radial-gradient(ellipse,rgba(108,99,255,0.14) 0%,transparent 70%);pointer-events:none;z-index:0"></div>
+
+  <!-- Estrellas -->
+  <svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0">
+    <circle cx="45" cy="30" r="1.5" fill="white" opacity="0.6" style="animation:estrellaL 2s infinite"/>
+    <circle cx="120" cy="75" r="1" fill="white" opacity="0.4" style="animation:estrellaL 3s infinite .5s"/>
+    <circle cx="210" cy="22" r="2" fill="white" opacity="0.7" style="animation:estrellaL 2.5s infinite 1s"/>
+    <circle cx="320" cy="48" r="1" fill="white" opacity="0.5" style="animation:estrellaL 4s infinite .2s"/>
+    <circle cx="430" cy="18" r="1.5" fill="white" opacity="0.6" style="animation:estrellaL 3s infinite 1.5s"/>
+    <circle cx="540" cy="55" r="1" fill="white" opacity="0.4" style="animation:estrellaL 2s infinite .8s"/>
+    <circle cx="610" cy="32" r="2" fill="white" opacity="0.5" style="animation:estrellaL 3.5s infinite .3s"/>
+    <circle cx="65" cy="160" r="1" fill="white" opacity="0.3" style="animation:estrellaL 2s infinite 1.2s"/>
+    <circle cx="170" cy="185" r="1.5" fill="white" opacity="0.6" style="animation:estrellaL 4s infinite .7s"/>
+    <circle cx="500" cy="145" r="1" fill="white" opacity="0.4" style="animation:estrellaL 3s infinite 2s"/>
+    <circle cx="590" cy="175" r="2" fill="white" opacity="0.5" style="animation:estrellaL 2.5s infinite .4s"/>
+    <circle cx="355" cy="115" r="1" fill="#8b84ff" opacity="0.7" style="animation:estrellaL 3s infinite 1s"/>
+    <circle cx="90" cy="490" r="1" fill="white" opacity="0.4" style="animation:estrellaL 3s infinite"/>
+    <circle cx="560" cy="470" r="1.5" fill="white" opacity="0.5" style="animation:estrellaL 2s infinite 1s"/>
+    <circle cx="310" cy="510" r="1" fill="white" opacity="0.3" style="animation:estrellaL 4s infinite .5s"/>
+    <circle cx="640" cy="300" r="1" fill="#3ecf8e" opacity="0.5" style="animation:estrellaL 3s infinite 2s"/>
+    <circle cx="30" cy="340" r="1.5" fill="#8b84ff" opacity="0.4" style="animation:estrellaL 2.5s infinite .6s"/>
+  </svg>
+
+  <!-- Símbolos flotantes -->
+  <div class="lsym ls1">∑</div>
+  <div class="lsym ls2">E=mc²</div>
+  <div class="lsym ls3">H₂O</div>
+  <div class="lsym ls4">∫</div>
+  <div class="lsym ls5">F=ma</div>
+  <div class="lsym ls6">π</div>
+  <div class="lsym ls7">CO₂</div>
+  <div class="lsym ls8">τ=r×F</div>
+  <div class="lsym ls9">Δ</div>
+  <div class="lsym ls10">λ</div>
+  <div class="lsym ls11">PV=nRT</div>
+  <div class="lsym ls12">∇</div>
+
+  <!-- Nave 1 morada -->
+  <div class="lnave1">
+    <svg width="58" height="26" viewBox="0 0 60 28">
+      <ellipse cx="30" cy="16" rx="26" ry="10" fill="#6c63ff" opacity="0.85"/>
+      <ellipse cx="30" cy="12" rx="14" ry="8" fill="#8b84ff"/>
+      <ellipse cx="30" cy="10" rx="8" ry="5" fill="#c8c4ff" opacity="0.6"/>
+      <ellipse cx="10" cy="20" rx="6" ry="4" fill="#4a42cc"/>
+      <ellipse cx="50" cy="20" rx="6" ry="4" fill="#4a42cc"/>
+      <circle cx="20" cy="21" r="2" fill="#3ecf8e" style="animation:parpL 1s infinite"/>
+      <circle cx="30" cy="23" r="2" fill="#f59e0b" style="animation:parpL 1.3s infinite .2s"/>
+      <circle cx="40" cy="21" r="2" fill="#3ecf8e" style="animation:parpL .8s infinite .5s"/>
+    </svg>
+  </div>
+  <!-- Nave 2 verde -->
+  <div class="lnave2">
+    <svg width="48" height="22" viewBox="0 0 60 28">
+      <ellipse cx="30" cy="16" rx="22" ry="9" fill="#3ecf8e" opacity="0.85"/>
+      <ellipse cx="30" cy="12" rx="12" ry="7" fill="#4ade9e"/>
+      <ellipse cx="30" cy="10" rx="7" ry="4" fill="#a7f3d0" opacity="0.6"/>
+      <ellipse cx="12" cy="20" rx="5" ry="3" fill="#2db87a"/>
+      <ellipse cx="48" cy="20" rx="5" ry="3" fill="#2db87a"/>
+      <circle cx="22" cy="22" r="2" fill="#6c63ff" style="animation:parpL .9s infinite"/>
+      <circle cx="30" cy="24" r="2" fill="#f59e0b" style="animation:parpL 1.5s infinite .3s"/>
+      <circle cx="38" cy="22" r="2" fill="#6c63ff" style="animation:parpL 1.1s infinite .6s"/>
+    </svg>
+  </div>
+  <!-- Nave 3 amarilla -->
+  <div class="lnave3">
+    <svg width="34" height="16" viewBox="0 0 60 28">
+      <ellipse cx="30" cy="16" rx="20" ry="8" fill="#f59e0b" opacity="0.75"/>
+      <ellipse cx="30" cy="12" rx="10" ry="6" fill="#fcd34d"/>
+      <circle cx="24" cy="20" r="2" fill="#ef4444" style="animation:parpL .7s infinite"/>
+      <circle cx="36" cy="20" r="2" fill="#ef4444" style="animation:parpL 1.2s infinite .4s"/>
+    </svg>
+  </div>
+
+  <div class="auth-box" style="position:relative;z-index:2">
+    <!-- Marciano flotando -->
+    <div class="marciano-anim" style="text-align:center;margin-bottom:2px">
+      <svg width="170" height="195" viewBox="0 0 680 380">
+        <rect x="296" y="285" width="28" height="55" rx="14" fill="#2db87a"/>
+        <rect x="356" y="285" width="28" height="55" rx="14" fill="#2db87a"/>
+        <ellipse cx="340" cy="240" rx="72" ry="75" fill="#3ecf8e"/>
+        <path d="M268,225 Q235,245 232,275" fill="none" stroke="#3ecf8e" stroke-width="22" stroke-linecap="round"/>
+        <path d="M412,225 Q445,245 448,275" fill="none" stroke="#3ecf8e" stroke-width="22" stroke-linecap="round"/>
+        <circle cx="231" cy="278" r="16" fill="#2db87a"/>
+        <circle cx="449" cy="278" r="16" fill="#2db87a"/>
+        <ellipse cx="340" cy="155" rx="88" ry="75" fill="#4ade9e"/>
+        <line x1="308" y1="85" x2="285" y2="42" stroke="#3ecf8e" stroke-width="5" stroke-linecap="round"/>
+        <circle cx="281" cy="36" r="11" fill="#6c63ff"/>
+        <circle cx="281" cy="36" r="5" fill="#8b84ff"/>
+        <line x1="372" y1="85" x2="395" y2="42" stroke="#3ecf8e" stroke-width="5" stroke-linecap="round"/>
+        <circle cx="399" cy="36" r="11" fill="#6c63ff"/>
+        <circle cx="399" cy="36" r="5" fill="#8b84ff"/>
+        <ellipse cx="312" cy="155" rx="30" ry="33" fill="#0d1117"/>
+        <ellipse cx="368" cy="155" rx="30" ry="33" fill="#0d1117"/>
+        <ellipse cx="312" cy="155" rx="21" ry="23" fill="#6c63ff"/>
+        <ellipse cx="368" cy="155" rx="21" ry="23" fill="#6c63ff"/>
+        <ellipse cx="312" cy="155" rx="11" ry="12" fill="#1a0a4a"/>
+        <ellipse cx="368" cy="155" rx="11" ry="12" fill="#1a0a4a"/>
+        <circle cx="305" cy="147" r="6" fill="white"/>
+        <circle cx="361" cy="147" r="6" fill="white"/>
+        <circle cx="320" cy="160" r="3" fill="white" opacity="0.5"/>
+        <circle cx="376" cy="160" r="3" fill="white" opacity="0.5"/>
+        <path d="M316,186 Q340,204 364,186" fill="none" stroke="#1a6b4a" stroke-width="4" stroke-linecap="round"/>
+        <ellipse cx="285" cy="173" rx="14" ry="9" fill="#2db87a" opacity="0.6"/>
+        <ellipse cx="395" cy="173" rx="14" ry="9" fill="#2db87a" opacity="0.6"/>
+      </svg>
+    </div>
+
     <div class="auth-logo">
       <div class="auth-logo-title">IngVirLab</div>
       <div class="auth-logo-sub">LABORATORIO VIRTUAL</div>
     </div>
+
     <div class="install-banner" id="install-banner" onclick="installApp()">
       <div style="font-size:26px">📲</div>
       <div class="install-banner-text">
@@ -404,6 +541,7 @@ body.mobile-layout .topic-grid{grid-template-columns:repeat(2,1fr)}
       </div>
       <button class="install-banner-btn">Instalar</button>
     </div>
+
     <div class="auth-card">
       <label class="lbl">Usuario</label>
       <input type="text" class="inp" id="login-user" placeholder="Escribe tu usuario" onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()" autocomplete="off" style="margin-bottom:14px;letter-spacing:0">
