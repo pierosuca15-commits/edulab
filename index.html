@@ -2054,21 +2054,40 @@ window.mostrarResultado = function mostrarResultado(a){
 }
 
 window.mostrarDuplicado = function mostrarDuplicado(d){
+  // Imagen actual (que el usuario acaba de subir) vs imagen guardada en Firebase
+  const imgActual = scannerImagenBase64 ? 'data:image/jpeg;base64,'+scannerImagenBase64 : '';
+  const imgGuardada = d.fotoUrl || '';
+  const dataStr = JSON.stringify(d).replace(/"/g,'&quot;');
   const html = `
-    <div style="background:var(--bg2);border:1px solid #f59e0b40;border-radius:14px;padding:20px;text-align:center">
-      <div style="font-size:32px;margin-bottom:10px">📸</div>
-      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">Esta imagen ya fue analizada</div>
-      <div style="font-size:13px;color:var(--text2);margin-bottom:14px">
-        Por: <b>${d.alumno}</b> · ${d.fecha?.slice(0,10)||''}<br>
-        Curso: <b>${d.materia}</b> · Tema: <b>${d.tema}</b>
+    <div style="background:var(--bg2);border:1px solid #f59e0b50;border-radius:16px;overflow:hidden">
+      <!-- Banner aviso -->
+      <div style="background:#f59e0b18;border-bottom:1px solid #f59e0b30;padding:14px 18px;display:flex;align-items:center;gap:10px">
+        <span style="font-size:22px">⚠️</span>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:#f59e0b">Imagen ya analizada anteriormente</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">Por <b>${d.alumno}</b> · ${d.fecha?.slice(0,10)||''} · <b>${d.materia}</b> — ${d.tema}</div>
+        </div>
       </div>
-      <div style="display:flex;gap:8px;justify-content:center">
-        <button onclick="mostrarResultado(${JSON.stringify(d).replace(/"/g,'&quot;')})" style="padding:10px 20px;background:var(--accent);color:white;border:none;border-radius:9px;cursor:pointer;font-size:13px;font-weight:600;font-family:var(--sans)">Ver análisis anterior</button>
-        <button onclick="resetScanner()" style="padding:10px 16px;background:var(--bg3);color:var(--text2);border:1px solid var(--border2);border-radius:9px;cursor:pointer;font-size:13px;font-family:var(--sans)">Analizar de nuevo</button>
+      <!-- Comparación de imágenes -->
+      <div style="padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;text-align:center">Tu imagen</div>
+          <img src="${imgActual}" style="width:100%;border-radius:10px;border:2px solid var(--accent);object-fit:contain;max-height:160px;background:var(--bg3)"/>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;text-align:center">Imagen guardada</div>
+          <img src="${imgGuardada}" style="width:100%;border-radius:10px;border:1px solid var(--border2);object-fit:contain;max-height:160px;background:var(--bg3)" onerror="this.src='';this.style.display='none'"/>
+        </div>
+      </div>
+      <!-- Botones -->
+      <div style="padding:0 16px 16px;display:flex;gap:8px">
+        <button onclick="mostrarResultado(${dataStr})" style="flex:1;padding:12px 8px;background:var(--accent);color:white;border:none;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;font-family:var(--sans);touch-action:manipulation">📊 Ver análisis guardado</button>
+        <button onclick="window.resetScanner()" style="padding:12px 14px;background:var(--bg3);color:var(--text2);border:1px solid var(--border2);border-radius:10px;cursor:pointer;font-size:13px;font-family:var(--sans);touch-action:manipulation">🔄 Cambiar imagen</button>
       </div>
     </div>`;
-  document.getElementById('scanner-preview-wrap').innerHTML = html;
-  document.getElementById('scanner-preview-wrap').style.display = 'block';
+  const wrap = document.getElementById('scanner-preview-wrap');
+  wrap.innerHTML = html;
+  wrap.style.display = 'block';
 }
 
 // ── Modos extra ────────────────────────
