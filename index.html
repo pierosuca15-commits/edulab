@@ -721,9 +721,57 @@ const AUTO_CFG = {
 };
 
 // ── Gemini ──────────────────────────────
-const GEMINI_KEY = 'AIzaSyDtd0HQ4Y6McsWUAgl7gZOCcHDhH9hNsqo';
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`;
-window.GEMINI_URL = GEMINI_URL;
+// ── Claude AI ─────────────────────────────
+const CLAUDE_KEY = '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';
+const CLAUDE_URL = 'https://api.anthropic.com/v1/messages';
+window.CLAUDE_KEY = CLAUDE_KEY;
+window.CLAUDE_URL = CLAUDE_URL;
+
+// Función central para llamar a Claude
+window.llamarClaude = async function(systemPrompt, userContent, maxTokens=1500){
+  const body = {
+    model: 'claude-haiku-4-5',
+    max_tokens: maxTokens,
+    system: systemPrompt,
+    messages: [{ role: 'user', content: userContent }]
+  };
+  const res = await fetch(CLAUDE_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': CLAUDE_KEY,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify(body)
+  });
+  const data = await res.json();
+  if(data.error) throw new Error(data.error.message);
+  return data.content?.[0]?.text || '';
+};
+
+// Función para chat multi-turno con Claude
+window.llamarClaudeChat = async function(systemPrompt, history, maxTokens=1000){
+  const body = {
+    model: 'claude-haiku-4-5',
+    max_tokens: maxTokens,
+    system: systemPrompt,
+    messages: history
+  };
+  const res = await fetch(CLAUDE_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': CLAUDE_KEY,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify(body)
+  });
+  const data = await res.json();
+  if(data.error) throw new Error(data.error.message);
+  return data.content?.[0]?.text || '';
+};
 
 let db=null, storage=null, currentUser=null, currentCourseId=null, currentTopicId=null;
 let currentTopicName='', editingDayId=null, currentContentType='html', editingContentId=null;
@@ -1842,38 +1890,45 @@ window.analizarFoto = async function analizarFoto(){
       return;
     }
 
-    // 2. Enviar a Gemini
+    // 2. Enviar a Claude Vision
     setLoadingTxt('La IA está analizando tu imagen...');
-    const prompt = `Analiza esta imagen de un apunte o ejercicio universitario de ingeniería.
-IMPORTANTE: Responde SOLO con el JSON a continuación, sin ningún texto antes ni después, sin bloques de código, sin explicaciones adicionales.
-{"materia":"Física","tema":"torque y equilibrio","subtema":"suma de momentos","nivel":"intermedio","explicacion":"Breve descripción del tema en 2-3 oraciones.","tiene_ejercicio":false,"solucion":""}
+    const sysPrompt = 'Eres un analizador de apuntes universitarios de ingeniería. Siempre respondes ÚNICAMENTE con JSON válido, sin texto adicional, sin bloques de código markdown.';
+    const userContent = [
+      {
+        type: 'image',
+        source: { type: 'base64', media_type: 'image/jpeg', data: scannerImagenBase64 }
+      },
+      {
+        type: 'text',
+        text: `Analiza este apunte universitario y responde SOLO con este JSON (sin texto extra):
+{"materia":"Física","tema":"nombre del tema","subtema":"subtema específico","nivel":"intermedio","explicacion":"Explicación en 3-4 oraciones.","tiene_ejercicio":false,"solucion":""}
 
-Ahora analiza la imagen real y devuelve el JSON con estos campos:
-- materia: exactamente "Física", "Matemática", "Química" o "Otro"
-- tema: nombre del tema principal identificado
-- subtema: subtema o concepto específico
+Campos:
+- materia: "Física", "Matemática", "Química" o "Otro"
 - nivel: "básico", "intermedio" o "avanzado"
-- explicacion: explicación académica en 3-4 oraciones
-- tiene_ejercicio: true si hay un ejercicio o problema numérico, false si es solo teoría
-- solucion: si tiene_ejercicio es true, escribe la solución paso a paso; si es false, deja vacío ""
-
-Responde ÚNICAMENTE con el JSON, nada más.`;
-
-    const geminiRes = await fetch(GEMINI_URL,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts:[
-        {inline_data:{mime_type:'image/jpeg',data:scannerImagenBase64}},
-        {text:prompt}
-      ]}]})
+- tiene_ejercicio: true si hay problema numérico, false si es solo teoría
+- solucion: solución paso a paso si tiene_ejercicio es true, vacío "" si no`
+      }
+    ];
+    const claudeRes = await fetch(window.CLAUDE_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': window.CLAUDE_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5',
+        max_tokens: 1500,
+        system: sysPrompt,
+        messages: [{ role: 'user', content: userContent }]
+      })
     });
-    const geminiData = await geminiRes.json();
-    // Debug: ver respuesta completa si hay error
-    if(geminiData.error){ throw new Error('Gemini API: ' + geminiData.error.message); }
-    const rawTxt = geminiData.candidates?.[0]?.content?.parts?.[0]?.text||'{}';
-    // Limpiar posibles bloques markdown y extraer solo el JSON
+    const claudeData = await claudeRes.json();
+    if(claudeData.error){ throw new Error('Claude API: ' + claudeData.error.message); }
+    const rawTxt = claudeData.content?.[0]?.text || '{}';
     let limpio = rawTxt.replace(/```json\s*/gi,'').replace(/```/g,'').trim();
-    // Si Gemini metió texto antes del JSON, extraer solo el objeto {}
     const matchJson = limpio.match(/\{[\s\S]*\}/);
     if(matchJson) limpio = matchJson[0];
     let analisis;
@@ -1982,14 +2037,25 @@ window.modoScanner = async function modoScanner(modo){
     return;
   }
   try{
-    const url = window.GEMINI_URL || GEMINI_URL;
-    const r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})});
+    const r = await fetch(window.CLAUDE_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': window.CLAUDE_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5',
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
     const d = await r.json();
     if(d.error){ res.textContent = 'Error API: ' + d.error.message; return; }
-    const txt = d.candidates?.[0]?.content?.parts?.[0]?.text||'Sin respuesta';
+    const txt = d.content?.[0]?.text || 'Sin respuesta';
     res.textContent = txt;
-    res.style.whiteSpace='pre-wrap';
+    res.style.whiteSpace = 'pre-wrap';
   }catch(e){ res.textContent='Error al conectar con la IA: ' + e.message; }
 }
 
@@ -2012,13 +2078,12 @@ window.enviarChatScanner = async function enviarChatScanner(){
   msgs.innerHTML += `<div style="background:var(--accent);color:white;border-radius:10px;padding:8px 12px;font-size:13px;align-self:flex-end;max-width:85%">${txt}</div>`;
   msgs.scrollTop=99999;
   scannerChatHistory.push({role:'user',parts:[{text:txt}]});
-  const sysTxt = `Eres un asistente académico de ingeniería universitaria especializado en ${scannerAnalisis?.materia||'Física'}. El estudiante está estudiando el tema: "${scannerAnalisis?.tema||'ingeniería'}" (${scannerAnalisis?.subtema||''}). Explica de forma clara, usa ejemplos si ayuda, y responde siempre en español.`;
-  // Construir historial con system prompt como primer turno user+model (compatible con Gemini Flash)
-  const historialCompleto = [
-    {role:'user', parts:[{text: sysTxt + '\n\nConfirma que entendiste tu rol respondiendo: "Listo, puedo ayudarte con ' + (scannerAnalisis?.tema||'el tema') + '."'}]},
-    {role:'model', parts:[{text: 'Listo, puedo ayudarte con ' + (scannerAnalisis?.tema||'el tema') + '.'}]},
-    ...scannerChatHistory
-  ];
+  const sysTxt = `Eres un asistente académico de ingeniería universitaria especializado en ${scannerAnalisis?.materia||'Física'}. El estudiante está estudiando: "${scannerAnalisis?.tema||'ingeniería'}" - ${scannerAnalisis?.subtema||''}. Explica de forma clara, usa ejemplos concretos y responde siempre en español.`;
+  // Convertir historial de Gemini format a Claude format
+  const historialClaude = scannerChatHistory.map(m => ({
+    role: m.role === 'model' ? 'assistant' : 'user',
+    content: m.parts?.[0]?.text || m.content || ''
+  }));
   // Indicador de "escribiendo"
   const botTyping = document.createElement('div');
   botTyping.style.cssText = 'background:var(--bg3);border-radius:10px;padding:8px 12px;font-size:13px;color:var(--text3);align-self:flex-start;font-style:italic';
@@ -2026,13 +2091,26 @@ window.enviarChatScanner = async function enviarChatScanner(){
   msgs.appendChild(botTyping);
   msgs.scrollTop=99999;
   try{
-    const url = window.GEMINI_URL || GEMINI_URL;
-    const r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:historialCompleto})});
+    const r = await fetch(window.CLAUDE_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': window.CLAUDE_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5',
+        max_tokens: 1000,
+        system: sysTxt,
+        messages: historialClaude
+      })
+    });
     const d = await r.json();
     if(d.error){ botTyping.style.color='var(--red)'; botTyping.textContent='Error API: '+d.error.message; return; }
-    const reply = d.candidates?.[0]?.content?.parts?.[0]?.text||'No pude responder.';
-    scannerChatHistory.push({role:'model',parts:[{text:reply}]});
+    const reply = d.content?.[0]?.text || 'No pude responder.';
+    // Guardar en historial formato Gemini para compatibilidad
+    scannerChatHistory.push({role:'model', parts:[{text:reply}]});
     botTyping.style.color='var(--text)';
     botTyping.style.fontStyle='normal';
     botTyping.style.whiteSpace='pre-wrap';
@@ -2186,8 +2264,8 @@ window.toast=(msg,isErr=false)=>{
 </div>
 
 <script>
-// La GEMINI_KEY real se define en el módulo de arriba como window.GEMINI_KEY
-// Usamos la misma key y URL que el scanner (definidas en el módulo ES)
+
+
 const chatHistory = [];
 
 function toggleChat(){
@@ -2213,27 +2291,34 @@ async function sendChat(){
   if(!text) return;
   inp.value = '';
   addMsg(text, 'user');
-  chatHistory.push({role:'user', parts:[{text}]});
+  // Historial en formato Claude
+  chatHistory.push({role:'user', content: text});
   const sendBtn = document.getElementById('chat-send');
   sendBtn.disabled = true;
   const typing = addMsg('⏳ Escribiendo...', 'bot typing');
   try{
-    const url = window.GEMINI_URL;
-    if(!url){ typing.textContent = 'Error: API no inicializada.'; sendBtn.disabled=false; return; }
     const sysTxt = 'Eres un asistente académico de ingeniería universitaria (Física, Matemática, Química). Responde en español de forma clara y concisa.';
-    const r = await fetch(url, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
+    const r = await fetch(window.CLAUDE_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': window.CLAUDE_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
       body: JSON.stringify({
-        system_instruction:{parts:[{text:sysTxt}]},
-        contents: chatHistory
+        model: 'claude-haiku-4-5',
+        max_tokens: 1000,
+        system: sysTxt,
+        messages: chatHistory
       })
     });
     const d = await r.json();
     if(d.error){ typing.textContent = 'Error API: ' + d.error.message; sendBtn.disabled=false; return; }
-    const reply = d.candidates?.[0]?.content?.parts?.[0]?.text || 'No pude responder.';
-    chatHistory.push({role:'model', parts:[{text:reply}]});
+    const reply = d.content?.[0]?.text || 'No pude responder.';
+    chatHistory.push({role:'assistant', content: reply});
     typing.className = 'msg bot';
+    typing.style.whiteSpace = 'pre-wrap';
     typing.textContent = reply;
   } catch(e){
     typing.textContent = 'Error de conexión: ' + e.message;
