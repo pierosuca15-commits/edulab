@@ -1963,9 +1963,6 @@ Reglas:
     await addDoc(collection(db,`scanner_historial/${currentUser.id}/fotos`), registro);
 
     scannerAnalisis = analisis;
-    // Limpiar cache de modos al analizar nueva imagen
-    Object.keys(_modoCache).forEach(k=>delete _modoCache[k]);
-    _chatAnalisisTema = null;
     document.getElementById('scanner-loading').style.display = 'none';
     mostrarResultado(analisis);
     cargarHistorialAlumno();
@@ -1984,58 +1981,60 @@ function setLoadingTxt(t){ const el=document.getElementById('scanner-loading-txt
 
 // ── Renderizar texto con KaTeX ─────────
 function renderizarKaTeX(texto, contenedor){
-  // Proteger bloques LaTeX antes de escapar HTML
+  if(!texto){ contenedor.innerHTML=''; return; }
   const placeholders = [];
   let t = texto;
 
-  // Extraer $$...$$ y $...$ temporalmente
-  t = t.replace(/\$\$([\s\S]+?)\$\$/g, (m,p1)=>{ placeholders.push({type:'display',tex:p1}); return 'PHOLD_D_'+(placeholders.length-1)+'_END'; });
-  t = t.replace(/\$([^$\n]+?)\$/g, (m,p1)=>{ placeholders.push({type:'inline',tex:p1}); return 'PHOLD_I_'+(placeholders.length-1)+'_END'; });
+  // 1. Proteger bloques LaTeX (display primero, luego inline)
+  // Soporta tanto $$ como \[ \]
+  t = t.replace(/\\\[([\s\S]+?)\\\]/g, (m,p1)=>{ placeholders.push({d:true,v:p1}); return 'PHD'+(placeholders.length-1)+'Z'; });
+  t = t.replace(/\$\$([\s\S]+?)\$\$/g, (m,p1)=>{ placeholders.push({d:true,v:p1}); return 'PHD'+(placeholders.length-1)+'Z'; });
+  t = t.replace(/\\\(([\s\S]+?)\\\)/g, (m,p1)=>{ placeholders.push({d:false,v:p1}); return 'PHI'+(placeholders.length-1)+'Z'; });
+  t = t.replace(/\$([^$\n]{1,200}?)\$/g, (m,p1)=>{ if(p1.trim()) { placeholders.push({d:false,v:p1}); return 'PHI'+(placeholders.length-1)+'Z'; } return m; });
 
-  // Escapar HTML
+  // 2. Escapar HTML (seguro porque LaTeX ya está protegido)
   t = t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
-  // Markdown → HTML
-  // **negrita** (incluso con : al final)
-  t = t.replace(/\*\*([^*]+?)\*\*/g,'<strong style="color:var(--text);font-weight:700">$1</strong>');
-  // *cursiva*
-  t = t.replace(/\*([^*\n]+?)\*/g,'<em>$1</em>');
-  // ### titulo
-  t = t.replace(/^###\s*(.+)$/gm,'<div style="font-size:12px;font-weight:700;color:var(--accent);margin:14px 0 5px;letter-spacing:1px;text-transform:uppercase">$1</div>');
-  t = t.replace(/^##\s*(.+)$/gm,'<div style="font-size:15px;font-weight:700;color:var(--text);margin:14px 0 7px;border-bottom:1px solid var(--border);padding-bottom:4px">$1</div>');
-  t = t.replace(/^#\s*(.+)$/gm,'<div style="font-size:17px;font-weight:700;color:var(--text);margin:16px 0 8px">$1</div>');
-  // * item y - item
-  t = t.replace(/^[*\-]\s+(.+)$/gm,'<div style="padding:4px 0 4px 14px;border-left:2px solid var(--accent);margin:3px 0;color:var(--text)">$1</div>');
-  // 1. item
-  t = t.replace(/^(\d+)\.\s+(.+)$/gm,'<div style="padding:4px 0 4px 0;margin:4px 0;color:var(--text)"><span style="color:var(--accent);font-weight:700;margin-right:6px">$1.</span>$2</div>');
-  // \n\n → espacio
+  // 3. Markdown → HTML
+  t = t.replace(/\*\*([^*\n]+?)\*\*/g,'<strong style="color:var(--text)">$1</strong>');
+  t = t.replace(/\*([^*\n]+?)\*/g,'<em style="color:var(--text2)">$1</em>');
+  t = t.replace(/^---+$/gm,'<hr style="border:none;border-top:1px solid var(--border);margin:10px 0">');
+  t = t.replace(/^####\s*(.+)$/gm,'<div style="font-size:13px;font-weight:700;color:var(--accent);margin:12px 0 4px">$1</div>');
+  t = t.replace(/^###\s*(.+)$/gm,'<div style="font-size:13px;font-weight:700;color:var(--accent);margin:12px 0 4px;text-transform:uppercase;letter-spacing:.5px">$1</div>');
+  t = t.replace(/^##\s*(.+)$/gm,'<div style="font-size:15px;font-weight:700;color:var(--text);margin:14px 0 6px;border-bottom:1px solid var(--border);padding-bottom:3px">$1</div>');
+  t = t.replace(/^#\s*(.+)$/gm,'<div style="font-size:17px;font-weight:700;color:var(--text);margin:14px 0 8px">$1</div>');
+  t = t.replace(/^[-*]\s+(.+)$/gm,'<div style="padding:3px 0 3px 12px;border-left:2px solid var(--accent);margin:3px 0">$1</div>');
+  t = t.replace(/^(\d+)\.\s+(.+)$/gm,'<div style="padding:3px 0;margin:3px 0"><span style="color:var(--accent);font-weight:700;margin-right:5px">$1.</span>$2</div>');
+  t = t.replace(/`([^`]+?)`/g,'<code style="background:var(--bg4);padding:1px 5px;border-radius:4px;font-size:12px;color:var(--green);font-family:var(--mono)">$1</code>');
   t = t.replace(/\n\n/g,'<div style="margin:6px 0"></div>');
-  // \n → <br>
   t = t.replace(/\n/g,'<br>');
-  // `code`
-  t = t.replace(/`([^`]+?)`/g,'<code style="background:var(--bg4);padding:1px 6px;border-radius:4px;font-family:var(--mono);font-size:12px;color:var(--green)">$1</code>');
 
-  // Restaurar placeholders LaTeX
+  // 4. Restaurar LaTeX
   placeholders.forEach((p,i)=>{
-    if(p.type==='display') t = t.replace('PHOLD_D_'+i+'_END', '$$'+p.tex+'$$');
-    else t = t.replace('PHOLD_I_'+i+'_END', '$'+p.tex+'$');
+    if(p.d) t = t.split('PHD'+i+'Z').join('$$'+p.v+'$$');
+    else t = t.split('PHI'+i+'Z').join('$'+p.v+'$');
   });
 
   contenedor.innerHTML = t;
 
-  // Renderizar KaTeX
-  if(window.renderMathInElement){
-    try{
-      renderMathInElement(contenedor, {
-        delimiters:[
-          {left:'$$',right:'$$',display:true},
-          {left:'$',right:'$',display:false}
-        ],
-        throwOnError:false,
-        output:'html'
-      });
-    }catch(e){ console.warn('KaTeX:',e); }
+  // 5. Renderizar KaTeX — esperar si aún no cargó
+  function doRender(){
+    if(window.renderMathInElement){
+      try{
+        renderMathInElement(contenedor,{
+          delimiters:[
+            {left:'$$',right:'$$',display:true},
+            {left:'$',right:'$',display:false}
+          ],
+          throwOnError:false,
+          strict:false,
+          output:'html'
+        });
+      }catch(e){ console.warn('KaTeX:',e); }
+    }
   }
+  if(window.renderMathInElement){ doRender(); }
+  else { setTimeout(doRender, 800); }
 }
 
 // ── Mostrar resultado ──────────────────
@@ -2098,32 +2097,10 @@ window.mostrarDuplicado = function mostrarDuplicado(d){
 }
 
 // ── Modos extra ────────────────────────
-// Cache de resultados por modo para no regenerar
-const _modoCache = {};
-
 window.modoScanner = async function modoScanner(modo){
   if(!scannerAnalisis){ toast('Primero analiza una imagen',true); return; }
   const res = document.getElementById('srm-modo-resultado');
-
-  if(modo==='dudas'){
-    closeModal('scanner-result-modal');
-    abrirChatScanner();
-    return;
-  }
-
-  // Si ya se generó este modo, mostrar el resultado cacheado sin regenerar
-  const cacheKey = (scannerAnalisis.tema||'') + '_' + modo;
-  if(_modoCache[cacheKey]){
-    res.style.display='block';
-    res.innerHTML = _modoCache[cacheKey];
-    if(window.renderMathInElement){
-      try{ renderMathInElement(res,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],throwOnError:false}); }catch(e){}
-    }
-    return;
-  }
-
-  res.style.display='block';
-  res.textContent='⏳ Generando...';
+  res.style.display='block'; res.textContent='⏳ Generando...';
   let prompt = '';
   if(modo==='formulas') prompt=`Crea una hoja de referencia de fórmulas para el tema "${scannerAnalisis.tema}" de ${scannerAnalisis.materia} (${scannerAnalisis.subtema}).
 Para cada fórmula incluye:
@@ -2135,6 +2112,11 @@ Para cada fórmula incluye:
 No resuelvas ejercicios. Solo fórmulas con explicación. Mínimo 4 fórmulas clave.`;
   if(modo==='examen') prompt=`Basándote en el tema "${scannerAnalisis.tema}" de ${scannerAnalisis.materia}, genera 5 preguntas de opción múltiple de nivel universitario con sus respuestas correctas marcadas. Usa notación LaTeX para fórmulas: $formula$ para inline y $$formula$$ para display. Formato numerado y claro.`;
   if(modo==='resumen') prompt=`Crea un resumen académico completo del tema "${scannerAnalisis.tema} - ${scannerAnalisis.subtema}" de ${scannerAnalisis.materia}. Incluye: definiciones clave, fórmulas importantes con notación LaTeX ($formula$ inline, $$formula$$ display), condiciones de aplicación y puntos esenciales. Organizado con secciones claras.`;
+  if(modo==='dudas'){
+    closeModal('scanner-result-modal');
+    abrirChatScanner();
+    return;
+  }
   try{
     const r = await fetch(window.CLAUDE_URL, {
       method: 'POST',
@@ -2149,34 +2131,23 @@ No resuelvas ejercicios. Solo fórmulas con explicación. Mínimo 4 fórmulas cl
     if(d.error){ res.textContent = 'Error API: ' + d.error.message; return; }
     const txt = d.content?.[0]?.text || 'Sin respuesta';
     renderizarKaTeX(txt, res);
-    // Guardar en cache el innerHTML ya renderizado
-    _modoCache[cacheKey] = res.innerHTML;
   }catch(e){ res.textContent='Error al conectar con la IA: ' + e.message; }
 }
 
 // ── Chat de dudas ──────────────────────
 let scannerChatHistory = [];
 
-// Clave del chat actual para saber si corresponde al mismo análisis
-let _chatAnalisisTema = null;
-
 window.abrirChatScanner = function abrirChatScanner(){
+  scannerChatHistory = [];
   const msgs = document.getElementById('scanner-chat-msgs');
   const sub = document.getElementById('scanner-chat-subtitulo');
   if(sub) sub.textContent = (scannerAnalisis?.materia||'') + ' · ' + (scannerAnalisis?.tema||'');
-
-  // Solo resetear si es un nuevo análisis diferente
-  const temaActual = scannerAnalisis?.tema + '_' + scannerAnalisis?.materia;
-  if(_chatAnalisisTema !== temaActual){
-    _chatAnalisisTema = temaActual;
-    scannerChatHistory = [];
-    msgs.innerHTML = '';
-    const bienvenida = document.createElement('div');
-    bienvenida.style.cssText = 'background:var(--bg3);border:1px solid var(--border2);border-radius:14px 14px 14px 4px;padding:12px 14px;font-size:14px;color:var(--text);align-self:flex-start;max-width:85%;line-height:1.6';
-    bienvenida.innerHTML = 'Hola! Soy tu asistente de <b style="color:var(--accent)">' + (scannerAnalisis?.materia||'Física') + '</b>. Estoy listo para ayudarte con <b>' + (scannerAnalisis?.tema||'el tema') + '</b>.<br><span style="color:var(--text2);font-size:13px">¿Qué quieres saber?</span>';
-    msgs.appendChild(bienvenida);
-  }
-  // Si ya hay historial, solo reabrir el modal sin borrar nada
+  // Burbuja de bienvenida
+  msgs.innerHTML = '';
+  const bienvenida = document.createElement('div');
+  bienvenida.style.cssText = 'background:var(--bg3);border:1px solid var(--border2);border-radius:14px 14px 14px 4px;padding:12px 14px;font-size:14px;color:var(--text);align-self:flex-start;max-width:85%;line-height:1.6';
+  bienvenida.innerHTML = 'Hola! Soy tu asistente de <b style="color:var(--accent)">' + (scannerAnalisis?.materia||'Física') + '</b>. Estoy listo para ayudarte con <b>' + (scannerAnalisis?.tema||'el tema') + '</b>.<br><span style="color:var(--text2);font-size:13px">¿Qué quieres saber?</span>';
+  msgs.appendChild(bienvenida);
   openModal('scanner-chat-modal');
   setTimeout(()=>{ document.getElementById('scanner-chat-inp').focus(); }, 300);
 }
