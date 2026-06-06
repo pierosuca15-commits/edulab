@@ -405,11 +405,11 @@ body.mobile-layout .topic-grid{grid-template-columns:repeat(2,1fr)}
       <button class="install-banner-btn">Instalar</button>
     </div>
     <div class="auth-card">
-      <label class="lbl">Nombre</label>
-      <input type="text" class="inp" id="login-name" placeholder="Escribe tu nombre" onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()" autocomplete="off" style="margin-bottom:14px">
+      <label class="lbl">Usuario</label>
+      <input type="text" class="inp" id="login-user" placeholder="Escribe tu usuario" onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()" autocomplete="off" style="margin-bottom:14px;letter-spacing:0">
       <label class="lbl">Contraseña</label>
       <input type="password" class="inp inp-pass" id="login-pass" placeholder="Ingresa tu clave" onkeydown="if(event.key==='Enter')doLogin()">
-      <div class="err-box" id="login-err">Nombre o contraseña incorrectos.</div>
+      <div class="err-box" id="login-err">Usuario o contraseña incorrectos.</div>
       <button class="primary-btn" id="login-btn" onclick="doLogin()">Entrar →</button>
     </div>
   </div>
@@ -561,6 +561,7 @@ body.mobile-layout .topic-grid{grid-template-columns:repeat(2,1fr)}
     <div class="modal-title" id="user-modal-title">Nuevo usuario</div>
     <input type="hidden" id="editing-user-id">
     <div class="fg"><label class="flbl">Nombre</label><input type="text" class="finp" id="nu-name" placeholder="Ej: Juan Pérez"></div>
+    <div class="fg"><label class="flbl">Usuario</label><input type="text" class="finp" id="nu-usuario" placeholder="Ej: jpérez" autocomplete="off"></div>
     <div class="fg"><label class="flbl">Contraseña</label><input type="text" class="finp" id="nu-pass" placeholder="Ej: juan2026"></div>
     <div class="fg"><label class="flbl">Cursos</label><div class="course-checks" id="nu-course-checks"></div></div>
     <div class="fg" id="mascota-selector-wrap" style="display:none">
@@ -826,39 +827,38 @@ function showScreen(id){
 
 // LOGIN
 window.doLogin = async () => {
-  const nombre = (document.getElementById('login-name')?.value||'').trim().toLowerCase();
-  const pass = document.getElementById('login-pass').value;
+  const usuario = (document.getElementById('login-user')?.value||'').trim().toLowerCase();
+  const pass = document.getElementById('login-pass').value.trim();
   const err = document.getElementById('login-err');
   const btn = document.getElementById('login-btn');
   err.classList.remove('show');
+  if(!pass){ err.textContent='Ingresa tu contraseña.'; err.classList.add('show'); return; }
   btn.disabled=true; btn.textContent='Verificando...';
   try {
     const cfgSnap = await getDoc(doc(db,'config','app'));
     const cfg = cfgSnap.data()||{};
-    // Admin: no requiere nombre, solo contraseña de admin
-    if(pass===cfg.passAdmin){
+    // Admin: solo contraseña, sin usuario
+    if(pass===cfg.passAdmin && !usuario){
       currentUser={id:'admin',name:'Administrador',role:'admin',courses:[]};
       enterApp();
     } else {
-      // Buscar alumno por nombre + contraseña
+      // Alumno: usuario + contraseña obligatorios
+      if(!usuario){ err.textContent='Ingresa tu usuario.'; err.classList.add('show'); btn.disabled=false; btn.textContent='Entrar →'; return; }
       const usersSnap = await getDocs(collection(db,'users'));
       let found=null;
       usersSnap.forEach(d=>{
         const u=d.data();
-        const nombreDB = (u.name||'').trim().toLowerCase();
-        // Coincide si el nombre ingresado aparece en el nombre del usuario
-        if(u.pass===pass && (nombreDB===nombre || nombreDB.includes(nombre) || nombre.includes(nombreDB.split(' ')[0]))){
-          found={id:d.id,...u};
-        }
+        const usuarioDB = (u.usuario||'').trim().toLowerCase();
+        if(u.pass===pass && usuarioDB===usuario) found={id:d.id,...u};
       });
       if(found){ currentUser={...found,role:'student'}; showWelcome(); }
-      else err.classList.add('show');
+      else { err.textContent='Usuario o contraseña incorrectos.'; err.classList.add('show'); }
     }
   } catch(e){ err.textContent='Error: '+e.message; err.classList.add('show'); }
   btn.disabled=false; btn.textContent='Entrar →';
   document.getElementById('login-pass').value='';
-  const nameInp = document.getElementById('login-name');
-  if(nameInp) nameInp.value='';
+  const uInp = document.getElementById('login-user');
+  if(uInp) uInp.value='';
 };
 
 // WELCOME
@@ -1421,6 +1421,7 @@ window.openAddUserModal=()=>{
   document.getElementById('user-modal-title').textContent='Nuevo usuario';
   document.getElementById('editing-user-id').value='';
   document.getElementById('nu-name').value='';
+  if(document.getElementById('nu-usuario')) document.getElementById('nu-usuario').value='';
   document.getElementById('nu-pass').value='';
   document.getElementById('save-user-btn').textContent='Crear';
   document.getElementById('mascota-selector-wrap').style.display='block';
@@ -1436,6 +1437,7 @@ window.openEditUser=(id)=>{
   document.getElementById('user-modal-title').textContent='Editar usuario';
   document.getElementById('editing-user-id').value=id;
   document.getElementById('nu-name').value=u.name||'';
+  if(document.getElementById('nu-usuario')) document.getElementById('nu-usuario').value=u.usuario||'';
   document.getElementById('nu-pass').value=u.pass||'';
   document.getElementById('save-user-btn').textContent='Guardar';
   document.getElementById('mascota-selector-wrap').style.display='block';
@@ -1455,19 +1457,20 @@ window.openEditUser=(id)=>{
 window.saveUser=async()=>{
   const editingId=document.getElementById('editing-user-id').value;
   const name=document.getElementById('nu-name').value.trim();
+  const usuario=(document.getElementById('nu-usuario')?.value||'').trim().toLowerCase();
   const pass=document.getElementById('nu-pass').value.trim();
   const courses=[...document.querySelectorAll('#nu-course-checks input:checked')].map(i=>i.value);
   const mascotaEl=document.querySelector('.mascota-opt.selected');
   const mascota=mascotaEl?mascotaEl.dataset.m:'none';
   const nivelEl=document.querySelector('.nivel-opt.selected');
   const racha=nivelEl?parseInt(nivelEl.dataset.n):0;
-  if(!name||!pass){ toast('Nombre y contraseña obligatorios',true); return; }
+  if(!name||!usuario||!pass){ toast('Nombre, usuario y contraseña son obligatorios',true); return; }
   try{
     if(editingId){
-      await updateDoc(doc(db,'users',editingId),{name,pass,courses,mascota,racha});
+      await updateDoc(doc(db,'users',editingId),{name,usuario,pass,courses,mascota,racha});
       toast('Usuario actualizado');
     } else {
-      await addDoc(collection(db,'users'),{name,pass,courses,mascota,racha,createdAt:serverTimestamp()});
+      await addDoc(collection(db,'users'),{name,usuario,pass,courses,mascota,racha,createdAt:serverTimestamp()});
       toast(mascota!=='none'?'Usuario creado 🔥':'Usuario creado');
     }
     closeModal('add-user-modal');
