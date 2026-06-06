@@ -721,53 +721,25 @@ const AUTO_CFG = {
 };
 
 // ── Gemini ──────────────────────────────
-// ── Claude AI ─────────────────────────────
-const CLAUDE_KEY = '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';
-const CLAUDE_URL = 'https://api.anthropic.com/v1/messages';
-window.CLAUDE_KEY = CLAUDE_KEY;
+// ── Claude AI (via Vercel proxy) ──────────
+// La API key está segura en Vercel - no se expone en el código
+const CLAUDE_URL = '/api/ai';
+window.CLAUDE_KEY = ''; // no necesaria, la maneja el servidor
 window.CLAUDE_URL = CLAUDE_URL;
 
-// Función central para llamar a Claude
+// Función central para llamar a Claude (via /api/ai proxy)
 window.llamarClaude = async function(systemPrompt, userContent, maxTokens=1500){
-  const body = {
-    model: 'claude-haiku-4-5',
-    max_tokens: maxTokens,
-    system: systemPrompt,
-    messages: [{ role: 'user', content: userContent }]
-  };
-  const res = await fetch(CLAUDE_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': CLAUDE_KEY,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    },
-    body: JSON.stringify(body)
-  });
+  const body = { model: 'claude-haiku-4-5', max_tokens: maxTokens, system: systemPrompt, messages: [{ role: 'user', content: userContent }] };
+  const res = await fetch('/api/ai', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
   const data = await res.json();
   if(data.error) throw new Error(data.error.message);
   return data.content?.[0]?.text || '';
 };
 
-// Función para chat multi-turno con Claude
+// Función para chat multi-turno con Claude (via /api/ai proxy)
 window.llamarClaudeChat = async function(systemPrompt, history, maxTokens=1000){
-  const body = {
-    model: 'claude-haiku-4-5',
-    max_tokens: maxTokens,
-    system: systemPrompt,
-    messages: history
-  };
-  const res = await fetch(CLAUDE_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': CLAUDE_KEY,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    },
-    body: JSON.stringify(body)
-  });
+  const body = { model: 'claude-haiku-4-5', max_tokens: maxTokens, system: systemPrompt, messages: history };
+  const res = await fetch('/api/ai', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
   const data = await res.json();
   if(data.error) throw new Error(data.error.message);
   return data.content?.[0]?.text || '';
@@ -1912,12 +1884,7 @@ Campos:
     ];
     const claudeRes = await fetch(window.CLAUDE_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': window.CLAUDE_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-haiku-4-5',
         max_tokens: 1500,
@@ -2039,12 +2006,7 @@ window.modoScanner = async function modoScanner(modo){
   try{
     const r = await fetch(window.CLAUDE_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': window.CLAUDE_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-haiku-4-5',
         max_tokens: 2000,
@@ -2093,12 +2055,7 @@ window.enviarChatScanner = async function enviarChatScanner(){
   try{
     const r = await fetch(window.CLAUDE_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': window.CLAUDE_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-haiku-4-5',
         max_tokens: 1000,
@@ -2300,12 +2257,7 @@ async function sendChat(){
     const sysTxt = 'Eres un asistente académico de ingeniería universitaria (Física, Matemática, Química). Responde en español de forma clara y concisa.';
     const r = await fetch(window.CLAUDE_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': window.CLAUDE_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-haiku-4-5',
         max_tokens: 1000,
