@@ -1963,6 +1963,9 @@ Reglas:
     await addDoc(collection(db,`scanner_historial/${currentUser.id}/fotos`), registro);
 
     scannerAnalisis = analisis;
+    // Limpiar cache de modos al analizar nueva imagen
+    Object.keys(_modoCache).forEach(k=>delete _modoCache[k]);
+    _chatAnalisisTema = null;
     document.getElementById('scanner-loading').style.display = 'none';
     mostrarResultado(analisis);
     cargarHistorialAlumno();
@@ -2095,10 +2098,32 @@ window.mostrarDuplicado = function mostrarDuplicado(d){
 }
 
 // ── Modos extra ────────────────────────
+// Cache de resultados por modo para no regenerar
+const _modoCache = {};
+
 window.modoScanner = async function modoScanner(modo){
   if(!scannerAnalisis){ toast('Primero analiza una imagen',true); return; }
   const res = document.getElementById('srm-modo-resultado');
-  res.style.display='block'; res.textContent='⏳ Generando...';
+
+  if(modo==='dudas'){
+    closeModal('scanner-result-modal');
+    abrirChatScanner();
+    return;
+  }
+
+  // Si ya se generó este modo, mostrar el resultado cacheado sin regenerar
+  const cacheKey = (scannerAnalisis.tema||'') + '_' + modo;
+  if(_modoCache[cacheKey]){
+    res.style.display='block';
+    res.innerHTML = _modoCache[cacheKey];
+    if(window.renderMathInElement){
+      try{ renderMathInElement(res,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],throwOnError:false}); }catch(e){}
+    }
+    return;
+  }
+
+  res.style.display='block';
+  res.textContent='⏳ Generando...';
   let prompt = '';
   if(modo==='formulas') prompt=`Crea una hoja de referencia de fórmulas para el tema "${scannerAnalisis.tema}" de ${scannerAnalisis.materia} (${scannerAnalisis.subtema}).
 Para cada fórmula incluye:
@@ -2110,11 +2135,6 @@ Para cada fórmula incluye:
 No resuelvas ejercicios. Solo fórmulas con explicación. Mínimo 4 fórmulas clave.`;
   if(modo==='examen') prompt=`Basándote en el tema "${scannerAnalisis.tema}" de ${scannerAnalisis.materia}, genera 5 preguntas de opción múltiple de nivel universitario con sus respuestas correctas marcadas. Usa notación LaTeX para fórmulas: $formula$ para inline y $$formula$$ para display. Formato numerado y claro.`;
   if(modo==='resumen') prompt=`Crea un resumen académico completo del tema "${scannerAnalisis.tema} - ${scannerAnalisis.subtema}" de ${scannerAnalisis.materia}. Incluye: definiciones clave, fórmulas importantes con notación LaTeX ($formula$ inline, $$formula$$ display), condiciones de aplicación y puntos esenciales. Organizado con secciones claras.`;
-  if(modo==='dudas'){
-    closeModal('scanner-result-modal');
-    abrirChatScanner();
-    return;
-  }
   try{
     const r = await fetch(window.CLAUDE_URL, {
       method: 'POST',
@@ -2129,23 +2149,34 @@ No resuelvas ejercicios. Solo fórmulas con explicación. Mínimo 4 fórmulas cl
     if(d.error){ res.textContent = 'Error API: ' + d.error.message; return; }
     const txt = d.content?.[0]?.text || 'Sin respuesta';
     renderizarKaTeX(txt, res);
+    // Guardar en cache el innerHTML ya renderizado
+    _modoCache[cacheKey] = res.innerHTML;
   }catch(e){ res.textContent='Error al conectar con la IA: ' + e.message; }
 }
 
 // ── Chat de dudas ──────────────────────
 let scannerChatHistory = [];
 
+// Clave del chat actual para saber si corresponde al mismo análisis
+let _chatAnalisisTema = null;
+
 window.abrirChatScanner = function abrirChatScanner(){
-  scannerChatHistory = [];
   const msgs = document.getElementById('scanner-chat-msgs');
   const sub = document.getElementById('scanner-chat-subtitulo');
   if(sub) sub.textContent = (scannerAnalisis?.materia||'') + ' · ' + (scannerAnalisis?.tema||'');
-  // Burbuja de bienvenida
-  msgs.innerHTML = '';
-  const bienvenida = document.createElement('div');
-  bienvenida.style.cssText = 'background:var(--bg3);border:1px solid var(--border2);border-radius:14px 14px 14px 4px;padding:12px 14px;font-size:14px;color:var(--text);align-self:flex-start;max-width:85%;line-height:1.6';
-  bienvenida.innerHTML = 'Hola! Soy tu asistente de <b style="color:var(--accent)">' + (scannerAnalisis?.materia||'Física') + '</b>. Estoy listo para ayudarte con <b>' + (scannerAnalisis?.tema||'el tema') + '</b>.<br><span style="color:var(--text2);font-size:13px">¿Qué quieres saber?</span>';
-  msgs.appendChild(bienvenida);
+
+  // Solo resetear si es un nuevo análisis diferente
+  const temaActual = scannerAnalisis?.tema + '_' + scannerAnalisis?.materia;
+  if(_chatAnalisisTema !== temaActual){
+    _chatAnalisisTema = temaActual;
+    scannerChatHistory = [];
+    msgs.innerHTML = '';
+    const bienvenida = document.createElement('div');
+    bienvenida.style.cssText = 'background:var(--bg3);border:1px solid var(--border2);border-radius:14px 14px 14px 4px;padding:12px 14px;font-size:14px;color:var(--text);align-self:flex-start;max-width:85%;line-height:1.6';
+    bienvenida.innerHTML = 'Hola! Soy tu asistente de <b style="color:var(--accent)">' + (scannerAnalisis?.materia||'Física') + '</b>. Estoy listo para ayudarte con <b>' + (scannerAnalisis?.tema||'el tema') + '</b>.<br><span style="color:var(--text2);font-size:13px">¿Qué quieres saber?</span>';
+    msgs.appendChild(bienvenida);
+  }
+  // Si ya hay historial, solo reabrir el modal sin borrar nada
   openModal('scanner-chat-modal');
   setTimeout(()=>{ document.getElementById('scanner-chat-inp').focus(); }, 300);
 }
