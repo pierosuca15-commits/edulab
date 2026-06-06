@@ -1671,7 +1671,7 @@ window.guardarColorTopic=async()=>{
 let scannerAnalisis = null;
 let scannerImagenBase64 = null;
 
-function renderScanner(){
+window.renderScanner = function renderScanner(){
   const el = document.getElementById('scanner-content');
   const isAdmin = currentUser.role === 'admin';
   el.innerHTML = `
@@ -1687,6 +1687,8 @@ function renderScanner(){
       const galeria = document.getElementById('scanner-galeria');
       if(camara) camara.addEventListener('change', function(){ if(this.files&&this.files[0]) handleScannerFile(this.files[0]); });
       if(galeria) galeria.addEventListener('change', function(){ if(this.files&&this.files[0]) handleScannerFile(this.files[0]); });
+      const btnAnalizar = document.getElementById('btn-analizar');
+      if(btnAnalizar) btnAnalizar.addEventListener('click', analizarFoto);
       cargarHistorialAlumno();
     }, 100);
   }
@@ -1814,7 +1816,7 @@ async function calcularHash(b64){
 }
 
 // ── Analizar foto ──────────────────────
-async function analizarFoto(){
+window.analizarFoto = async function analizarFoto(){
   if(!scannerImagenBase64){ toast('Selecciona una imagen primero',true); return; }
   const btnA = document.getElementById('btn-analizar');
   btnA.disabled = true;
@@ -1908,7 +1910,7 @@ Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin backti
 function setLoadingTxt(t){ const el=document.getElementById('scanner-loading-txt'); if(el) el.textContent=t; }
 
 // ── Mostrar resultado ──────────────────
-function mostrarResultado(a){
+window.mostrarResultado = function mostrarResultado(a){
   const colores = {Física:'#3ecf8e',Matemática:'#6c63ff',Química:'#f97316',Otro:'#8b8fa8'};
   const c = colores[a.materia]||'#6c63ff';
   const mb = document.getElementById('srm-materia-badge');
@@ -1926,7 +1928,7 @@ function mostrarResultado(a){
   openModal('scanner-result-modal');
 }
 
-function mostrarDuplicado(d){
+window.mostrarDuplicado = function mostrarDuplicado(d){
   const html = `
     <div style="background:var(--bg2);border:1px solid #f59e0b40;border-radius:14px;padding:20px;text-align:center">
       <div style="font-size:32px;margin-bottom:10px">📸</div>
@@ -1945,7 +1947,7 @@ function mostrarDuplicado(d){
 }
 
 // ── Modos extra ────────────────────────
-async function modoScanner(modo){
+window.modoScanner = async function modoScanner(modo){
   if(!scannerAnalisis){ toast('Primero analiza una imagen',true); return; }
   const res = document.getElementById('srm-modo-resultado');
   res.style.display='block'; res.textContent='⏳ Generando...';
@@ -1968,14 +1970,14 @@ async function modoScanner(modo){
 // ── Chat de dudas ──────────────────────
 let scannerChatHistory = [];
 
-function abrirChatScanner(){
+window.abrirChatScanner = function abrirChatScanner(){
   scannerChatHistory = [];
   const msgs = document.getElementById('scanner-chat-msgs');
   msgs.innerHTML = `<div style="background:var(--bg3);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--text2);align-self:flex-start">Hola! Puedo ayudarte con <b>${scannerAnalisis?.tema||'el tema'}</b>. ¿Qué dudas tienes?</div>`;
   openModal('scanner-chat-modal');
 }
 
-async function enviarChatScanner(){
+window.enviarChatScanner = async function enviarChatScanner(){
   const inp = document.getElementById('scanner-chat-inp');
   const txt = inp.value.trim();
   if(!txt) return;
@@ -1997,7 +1999,7 @@ async function enviarChatScanner(){
 }
 
 // ── Historial alumno ───────────────────
-async function cargarHistorialAlumno(){
+window.cargarHistorialAlumno = async function cargarHistorialAlumno(){
   const el = document.getElementById('scanner-historial-alumno');
   if(!el) return;
   try{
@@ -2024,7 +2026,7 @@ window.mostrarResultadoHistorial=(item)=>{
 };
 
 // ── Historial admin ────────────────────
-async function cargarHistorialScanner(){
+window.cargarHistorialScanner = async function cargarHistorialScanner(){
   const el = document.getElementById('scanner-historial-admin');
   if(!el) return;
   el.innerHTML=`<div style="text-align:center;font-size:13px;color:var(--text3);padding:16px">Cargando...</div>`;
