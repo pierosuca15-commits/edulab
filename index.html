@@ -1737,11 +1737,32 @@ function handleScannerDrop(e){
 
 async function handleScannerFile(file){
   if(!file) return;
-  const comp = await comprimirImagen(file);
-  scannerImagenBase64 = comp.split(',')[1];
-  document.getElementById('scanner-preview-img').src = comp;
-  document.getElementById('scanner-preview-wrap').style.display = 'block';
-  document.getElementById('scanner-drop').style.display = 'none';
+  // Ocultar zona de drop y mostrar loading
+  document.getElementById('scanner-drop').style.display='none';
+  document.getElementById('scanner-loading').style.display='block';
+  setLoadingTxt('Cargando imagen...');
+  try{
+    const dataUrl = await leerArchivo(file);
+    setLoadingTxt('Comprimiendo...');
+    const comp = await comprimirImagen(dataUrl);
+    scannerImagenBase64 = comp.split(',')[1];
+    document.getElementById('scanner-loading').style.display='none';
+    document.getElementById('scanner-preview-img').src = comp;
+    document.getElementById('scanner-preview-wrap').style.display='block';
+  }catch(e){
+    document.getElementById('scanner-loading').style.display='none';
+    document.getElementById('scanner-drop').style.display='block';
+    toast('Error al cargar la imagen',true);
+  }
+}
+
+function leerArchivo(file){
+  return new Promise((resolve,reject)=>{
+    const r=new FileReader();
+    r.onload=e=>resolve(e.target.result);
+    r.onerror=()=>reject(new Error('No se pudo leer el archivo'));
+    r.readAsDataURL(file);
+  });
 }
 
 function resetScanner(){
@@ -1753,24 +1774,24 @@ function resetScanner(){
 }
 
 // ── Comprimir imagen ───────────────────
-function comprimirImagen(file){
-  return new Promise(resolve=>{
+function comprimirImagen(dataUrl){
+  return new Promise((resolve,reject)=>{
     const img = new Image();
-    const canvas = document.createElement('canvas');
     img.onload = ()=>{
-      const maxW = 800;
-      const maxH = 800;
-      let w = img.width;
-      let h = img.height;
-      if(w > maxW){ h = Math.round(h*maxW/w); w = maxW; }
-      if(h > maxH){ w = Math.round(w*maxH/h); h = maxH; }
-      canvas.width = w;
-      canvas.height = h;
-      canvas.getContext('2d').drawImage(img,0,0,w,h);
-      URL.revokeObjectURL(img.src);
-      resolve(canvas.toDataURL('image/jpeg',0.55));
+      try{
+        const canvas = document.createElement('canvas');
+        const maxW = 800, maxH = 800;
+        let w = img.width, h = img.height;
+        if(w > maxW){ h = Math.round(h*maxW/w); w = maxW; }
+        if(h > maxH){ w = Math.round(w*maxH/h); h = maxH; }
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(canvas.toDataURL('image/jpeg',0.55));
+      }catch(e){ reject(e); }
     };
-    img.src = URL.createObjectURL(file);
+    img.onerror = ()=>reject(new Error('Error al procesar imagen'));
+    img.src = dataUrl;
   });
 }
 
