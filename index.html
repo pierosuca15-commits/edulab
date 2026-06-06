@@ -1981,6 +1981,9 @@ Reglas:
     await addDoc(collection(db,`scanner_historial/${currentUser.id}/fotos`), registro);
 
     scannerAnalisis = analisis;
+    // Limpiar cache al analizar nueva imagen
+    Object.keys(_modoCache).forEach(k=>delete _modoCache[k]);
+    _chatTemaActivo = null;
     document.getElementById('scanner-loading').style.display = 'none';
     mostrarResultado(analisis);
     cargarHistorialAlumno();
@@ -2113,60 +2116,90 @@ window.mostrarDuplicado = function mostrarDuplicado(d){
 }
 
 // ── Modos extra ────────────────────────
+// Cache en memoria para no regenerar en la misma sesión
+const _modoCache = {};
+
 window.modoScanner = async function modoScanner(modo){
   if(!scannerAnalisis){ toast('Primero analiza una imagen',true); return; }
-  const res = document.getElementById('srm-modo-resultado');
-  res.style.display='block'; res.textContent='⏳ Generando...';
-  let prompt = '';
-  if(modo==='formulas') prompt=`Crea una hoja de referencia de fórmulas para el tema "${scannerAnalisis.tema}" de ${scannerAnalisis.materia} (${scannerAnalisis.subtema}).
-Para cada fórmula incluye:
-1. **Nombre** de la fórmula o ley
-2. La ecuación: $$formula$$
-3. **Variables**: qué significa cada símbolo (una línea)
-4. **Uso**: cuándo se aplica (una línea)
 
-No resuelvas ejercicios. Solo fórmulas con explicación. Mínimo 4 fórmulas clave.`;
-  if(modo==='examen') prompt=`Basándote en el tema "${scannerAnalisis.tema}" de ${scannerAnalisis.materia}, genera 5 preguntas de opción múltiple de nivel universitario con sus respuestas correctas marcadas. Usa notación LaTeX para fórmulas: $formula$ para inline y $$formula$$ para display. Formato numerado y claro.`;
-  if(modo==='resumen') prompt=`Crea un resumen académico completo del tema "${scannerAnalisis.tema} - ${scannerAnalisis.subtema}" de ${scannerAnalisis.materia}. Incluye: definiciones clave, fórmulas importantes con notación LaTeX ($formula$ inline, $$formula$$ display), condiciones de aplicación y puntos esenciales. Organizado con secciones claras.`;
   if(modo==='dudas'){
     window._abriendo_dudas = true;
     closeModal('scanner-result-modal');
     abrirChatScanner();
     return;
   }
+
+  const res = document.getElementById('srm-modo-resultado');
+  const cacheKey = (scannerAnalisis.hash||scannerAnalisis.tema||'x') + '_' + modo;
+
+  // 1. Cache en memoria (misma sesión) → instantáneo
+  if(_modoCache[cacheKey]){
+    res.style.display='block';
+    res.innerHTML = _modoCache[cacheKey];
+    if(window.renderMathInElement){ try{ renderMathInElement(res,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],throwOnError:false}); }catch(e){} }
+    return;
+  }
+
+  // 2. Buscar en Firestore (sesiones anteriores) → no regenera
+  res.style.display='block'; res.textContent='⏳ Buscando...';
   try{
-    const r = await fetch(window.CLAUDE_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5',
-        max_tokens: 2000,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
+    const docId = btoa((scannerAnalisis.hash||'x') + '_' + modo).replace(/[^a-zA-Z0-9]/g,'').slice(0,40);
+    const snap = await getDoc(doc(db,'scanner_modos_'+currentUser.id, docId));
+    if(snap.exists()){
+      const saved = snap.data();
+      renderizarKaTeX(saved.texto||'', res);
+      _modoCache[cacheKey] = res.innerHTML;
+      return;
+    }
+  }catch(e){ console.warn('Firestore read:', e); }
+
+  // 3. Generar por primera vez con Claude
+  res.textContent='⏳ Generando...';
+  let prompt = '';
+  if(modo==='formulas') prompt=`Crea una hoja de referencia de fórmulas para el tema "${scannerAnalisis.tema}" de ${scannerAnalisis.materia} (${scannerAnalisis.subtema}). Para cada fórmula: 1.**Nombre** 2.Ecuación: $$formula$$ 3.**Variables**: qué significa cada símbolo 4.**Uso**: cuándo aplica. No resuelvas ejercicios. Mínimo 4 fórmulas.`;
+  if(modo==='examen') prompt=`Basándote en "${scannerAnalisis.tema}" de ${scannerAnalisis.materia}, genera 5 preguntas de opción múltiple universitarias con respuestas correctas marcadas. LaTeX: $formula$ inline, $$formula$$ display. Formato numerado.`;
+  if(modo==='resumen') prompt=`Resumen académico completo de "${scannerAnalisis.tema} - ${scannerAnalisis.subtema}" (${scannerAnalisis.materia}). Incluye: definiciones, fórmulas en LaTeX ($formula$, $$formula$$), condiciones y puntos clave. Con secciones claras.`;
+  try{
+    const r = await fetch(window.CLAUDE_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-haiku-4-5',max_tokens:2000,messages:[{role:'user',content:prompt}]})});
     const d = await r.json();
-    if(d.error){ res.textContent = 'Error API: ' + d.error.message; return; }
-    const txt = d.content?.[0]?.text || 'Sin respuesta';
+    if(d.error){ res.textContent='Error API: '+d.error.message; return; }
+    const txt = d.content?.[0]?.text||'Sin respuesta';
     renderizarKaTeX(txt, res);
-  }catch(e){ res.textContent='Error al conectar con la IA: ' + e.message; }
+    _modoCache[cacheKey] = res.innerHTML;
+    // Guardar en Firestore para próximas sesiones
+    try{
+      const docId = btoa((scannerAnalisis.hash||'x')+'_'+modo).replace(/[^a-zA-Z0-9]/g,'').slice(0,40);
+      await setDoc(doc(db,'scanner_modos_'+currentUser.id,docId),{
+        texto:txt, modo, tema:scannerAnalisis.tema||'', materia:scannerAnalisis.materia||'',
+        hash:scannerAnalisis.hash||'', fecha:new Date().toISOString(), createdAt:serverTimestamp()
+      });
+    }catch(e){ console.warn('Firestore write:', e); }
+  }catch(e){ res.textContent='Error: '+e.message; }
 }
 
 // ── Chat de dudas ──────────────────────
 let scannerChatHistory = [];
 
+let _chatTemaActivo = null;
+
 window.abrirChatScanner = function abrirChatScanner(){
-  scannerChatHistory = [];
   const msgs = document.getElementById('scanner-chat-msgs');
   const sub = document.getElementById('scanner-chat-subtitulo');
   if(sub) sub.textContent = (scannerAnalisis?.materia||'') + ' · ' + (scannerAnalisis?.tema||'');
-  // Burbuja de bienvenida
-  msgs.innerHTML = '';
-  const bienvenida = document.createElement('div');
-  bienvenida.style.cssText = 'background:var(--bg3);border:1px solid var(--border2);border-radius:14px 14px 14px 4px;padding:12px 14px;font-size:14px;color:var(--text);align-self:flex-start;max-width:85%;line-height:1.6';
-  bienvenida.innerHTML = 'Hola! Soy tu asistente de <b style="color:var(--accent)">' + (scannerAnalisis?.materia||'Física') + '</b>. Estoy listo para ayudarte con <b>' + (scannerAnalisis?.tema||'el tema') + '</b>.<br><span style="color:var(--text2);font-size:13px">¿Qué quieres saber?</span>';
-  msgs.appendChild(bienvenida);
+  const temaActual = (scannerAnalisis?.hash||scannerAnalisis?.tema||'x') + '_' + (scannerAnalisis?.materia||'');
+  // Solo resetear si es un análisis distinto
+  if(_chatTemaActivo !== temaActual){
+    _chatTemaActivo = temaActual;
+    scannerChatHistory = [];
+    msgs.innerHTML = '';
+    const bienvenida = document.createElement('div');
+    bienvenida.style.cssText = 'background:var(--bg3);border:1px solid var(--border2);border-radius:14px 14px 14px 4px;padding:12px 14px;font-size:14px;color:var(--text);align-self:flex-start;max-width:85%;line-height:1.6';
+    bienvenida.innerHTML = 'Hola! Soy tu asistente de <b style="color:var(--accent)">' + (scannerAnalisis?.materia||'Física') + '</b>. Listo para ayudarte con <b>' + (scannerAnalisis?.tema||'el tema') + '</b>.<br><span style="color:var(--text2);font-size:13px">¿Qué quieres saber?</span>';
+    msgs.appendChild(bienvenida);
+  }
   openModal('scanner-chat-modal');
-  setTimeout(()=>{ document.getElementById('scanner-chat-inp').focus(); }, 300);
+  setTimeout(()=>{ const i=document.getElementById('scanner-chat-inp'); if(i) i.focus(); }, 300);
 }
 
 window.enviarChatScanner = async function enviarChatScanner(){
