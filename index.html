@@ -10,6 +10,10 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="IngVirLab">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="window.katexLoaded=true"></script>
 <style>
 :root{
   --bg:#0d0f14;--bg2:#13161e;--bg3:#1a1d27;--bg4:#1f2235;
@@ -653,33 +657,38 @@ body.mobile-layout .topic-grid{grid-template-columns:repeat(2,1fr)}
 
 <!-- MODAL RESULTADO SCANNER -->
 <div class="modal" id="scanner-result-modal">
-  <div class="modal-box" style="max-width:480px;padding:0;overflow:hidden">
-    <div id="srm-header" style="padding:18px 20px 14px;border-bottom:1px solid var(--border)">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
-        <div id="srm-materia-badge" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:var(--accent)20;color:var(--accent);border:1px solid var(--accent)40">Física</div>
-        <div id="srm-nivel-badge" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:var(--bg3);color:var(--text3);border:1px solid var(--border)">Intermedio</div>
+  <div class="modal-box" style="max-width:600px;width:95vw;padding:0;overflow:hidden;max-height:92vh;display:flex;flex-direction:column">
+    <!-- HEADER con badges -->
+    <div id="srm-header" style="padding:20px 22px 16px;border-bottom:1px solid var(--border);flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+        <div id="srm-materia-badge" style="font-size:12px;font-weight:700;padding:4px 14px;border-radius:20px;background:var(--accent)20;color:var(--accent);border:1px solid var(--accent)40">Física</div>
+        <div id="srm-nivel-badge" style="font-size:12px;font-weight:700;padding:4px 14px;border-radius:20px;background:var(--bg3);color:var(--text3);border:1px solid var(--border)">Intermedio</div>
+        <button onclick="closeModal('scanner-result-modal')" style="margin-left:auto;background:var(--bg3);border:1px solid var(--border2);color:var(--text2);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>
       </div>
-      <div id="srm-tema" style="font-size:18px;font-weight:700;color:var(--text)"></div>
-      <div id="srm-subtema" style="font-size:13px;color:var(--text2);margin-top:2px"></div>
+      <div id="srm-tema" style="font-size:20px;font-weight:700;color:var(--text);line-height:1.3"></div>
+      <div id="srm-subtema" style="font-size:13px;color:var(--text2);margin-top:4px"></div>
     </div>
-    <div style="padding:16px 20px;max-height:340px;overflow-y:auto">
-      <div style="font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Explicación</div>
-      <div id="srm-explicacion" style="font-size:14px;color:var(--text);line-height:1.7;margin-bottom:16px"></div>
+    <!-- CUERPO scrollable -->
+    <div style="flex:1;overflow-y:auto;padding:20px 22px">
+      <!-- Explicación -->
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:10px">📖 Explicación</div>
+      <div id="srm-explicacion" style="font-size:15px;color:var(--text);line-height:1.8;margin-bottom:20px"></div>
+      <!-- Solución paso a paso con KaTeX -->
       <div id="srm-solucion-wrap" style="display:none">
-        <div style="font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Solución paso a paso</div>
-        <div id="srm-solucion" style="font-size:13px;color:var(--text);line-height:1.8;background:var(--bg3);border-radius:10px;padding:12px 14px;white-space:pre-wrap"></div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:10px">🧮 Solución paso a paso</div>
+        <div id="srm-solucion" style="font-size:14px;color:var(--text);line-height:2;background:var(--bg3);border-radius:12px;padding:16px 18px;border:1px solid var(--border2)"></div>
       </div>
+      <!-- Resultado de modos (Examen/Resumen) -->
+      <div id="srm-modo-resultado" style="margin-top:16px;display:none;background:var(--bg3);border-radius:12px;padding:16px 18px;font-size:14px;color:var(--text);line-height:2;border:1px solid var(--border2)"></div>
     </div>
-    <!-- Modos extra -->
-    <div style="padding:14px 20px;border-top:1px solid var(--border);background:var(--bg2)">
+    <!-- FOOTER con acciones -->
+    <div style="padding:14px 22px;border-top:1px solid var(--border);background:var(--bg2);flex-shrink:0">
       <div style="font-size:12px;color:var(--text3);margin-bottom:10px;text-align:center">¿Qué quieres hacer?</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px">
-        <button onclick="modoScanner('examen')" style="padding:9px 6px;border-radius:10px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;font-size:12px;font-family:var(--sans);transition:all .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)'">🎯 Examen</button>
-        <button onclick="modoScanner('resumen')" style="padding:9px 6px;border-radius:10px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;font-size:12px;font-family:var(--sans);transition:all .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)'">📝 Resumen</button>
-        <button onclick="modoScanner('dudas')" style="padding:9px 6px;border-radius:10px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;font-size:12px;font-family:var(--sans);transition:all .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)'">💬 Dudas</button>
-        <button onclick="closeModal('scanner-result-modal')" style="padding:9px 6px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-size:12px;font-family:var(--sans)">⏭ Cerrar</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+        <button onclick="modoScanner('examen')" style="padding:12px 8px;border-radius:12px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;font-size:13px;font-family:var(--sans);font-weight:500;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text2)'">🎯 Examen</button>
+        <button onclick="modoScanner('resumen')" style="padding:12px 8px;border-radius:12px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;font-size:13px;font-family:var(--sans);font-weight:500;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text2)'">📝 Resumen</button>
+        <button onclick="modoScanner('dudas')" style="padding:12px 8px;border-radius:12px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;font-size:13px;font-family:var(--sans);font-weight:500;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text2)'">💬 Dudas</button>
       </div>
-      <div id="srm-modo-resultado" style="margin-top:12px;display:none;background:var(--bg3);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--text);line-height:1.7;max-height:200px;overflow-y:auto;white-space:pre-wrap"></div>
     </div>
   </div>
 </div>
@@ -1737,10 +1746,13 @@ function renderScannerAlumno(){
       <input type="file" id="scanner-galeria" accept="image/*" style="display:none"/>
     </div>
     <div id="scanner-preview-wrap" style="display:none;margin-bottom:16px;text-align:center">
-      <img id="scanner-preview-img" style="max-width:100%;max-height:260px;border-radius:12px;border:1px solid var(--border)"/>
-      <div style="margin-top:10px;display:flex;gap:8px;justify-content:center">
-        <button onclick="analizarFoto()" id="btn-analizar" style="padding:12px 28px;background:var(--accent);color:white;border:none;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;font-family:var(--sans)">🤖 Analizar con IA</button>
-        <button onclick="resetScanner()" style="padding:12px 16px;background:var(--bg3);color:var(--text2);border:1px solid var(--border2);border-radius:10px;cursor:pointer;font-size:14px;font-family:var(--sans)">✕</button>
+      <div style="position:relative;display:inline-block;max-width:100%">
+        <img id="scanner-preview-img" style="max-width:100%;max-height:320px;border-radius:14px;border:1px solid var(--border2);display:block"/>
+        <button onclick="resetScanner()" title="Cambiar imagen" style="position:absolute;top:8px;right:8px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.2);color:white;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);transition:all .2s" onmouseover="this.style.background='rgba(239,68,68,0.8)'" onmouseout="this.style.background='rgba(0,0,0,0.7)'">✕</button>
+      </div>
+      <div style="margin-top:14px;display:flex;gap:10px;justify-content:center">
+        <button onclick="analizarFoto()" id="btn-analizar" style="padding:14px 32px;background:var(--accent);color:white;border:none;border-radius:12px;cursor:pointer;font-size:15px;font-weight:600;font-family:var(--sans);box-shadow:0 4px 20px var(--accent)40;transition:all .2s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">🤖 Analizar con IA</button>
+        <button onclick="resetScanner()" style="padding:14px 18px;background:var(--bg3);color:var(--text2);border:1px solid var(--border2);border-radius:12px;cursor:pointer;font-size:14px;font-family:var(--sans);transition:all .2s" title="Cambiar imagen">🔄 Cambiar</button>
       </div>
     </div>
     <div id="scanner-loading" style="display:none;text-align:center;padding:24px">
@@ -1864,7 +1876,7 @@ window.analizarFoto = async function analizarFoto(){
 
     // 2. Enviar a Claude Vision
     setLoadingTxt('La IA está analizando tu imagen...');
-    const sysPrompt = 'Eres un analizador de apuntes universitarios de ingeniería. Siempre respondes ÚNICAMENTE con JSON válido, sin texto adicional, sin bloques de código markdown.';
+    const sysPrompt = 'Eres un analizador experto de apuntes universitarios de ingeniería. Respondes ÚNICAMENTE con JSON válido, sin texto adicional ni bloques markdown. Para soluciones matemáticas usas notación LaTeX estándar entre $...$ para inline y $$...$$ para display.';
     const userContent = [
       {
         type: 'image',
@@ -1872,14 +1884,20 @@ window.analizarFoto = async function analizarFoto(){
       },
       {
         type: 'text',
-        text: `Analiza este apunte universitario y responde SOLO con este JSON (sin texto extra):
-{"materia":"Física","tema":"nombre del tema","subtema":"subtema específico","nivel":"intermedio","explicacion":"Explicación en 3-4 oraciones.","tiene_ejercicio":false,"solucion":""}
+        text: `Analiza este apunte/ejercicio universitario de ingeniería. Responde SOLO con este JSON exacto:
+{"materia":"Física","tema":"nombre del tema principal","subtema":"subtema específico","nivel":"intermedio","explicacion":"Explicación académica clara del tema en 3-4 oraciones bien desarrolladas.","tiene_ejercicio":false,"solucion":""}
 
-Campos:
-- materia: "Física", "Matemática", "Química" o "Otro"
+Reglas:
+- materia: exactamente "Física", "Matemática", "Química" o "Ingeniería"
 - nivel: "básico", "intermedio" o "avanzado"
-- tiene_ejercicio: true si hay problema numérico, false si es solo teoría
-- solucion: solución paso a paso si tiene_ejercicio es true, vacío "" si no`
+- explicacion: explicación conceptual clara y completa (mínimo 3 oraciones)
+- tiene_ejercicio: true si hay problema numérico o ejercicio concreto, false si es teoría
+- solucion: si tiene_ejercicio=true, escribe la solución COMPLETA paso a paso con:
+  * Identificación de datos y variables
+  * Planteamiento (ecuaciones con LaTeX: $F = ma$, $$\sum \tau = 0$$)
+  * Desarrollo matemático detallado con cada paso
+  * Resultado final con unidades y recuadro
+  Si tiene_ejercicio=false, deja vacío ""`
       }
     ];
     const claudeRes = await fetch(window.CLAUDE_URL, {
@@ -1887,7 +1905,7 @@ Campos:
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-haiku-4-5',
-        max_tokens: 1500,
+        max_tokens: 3000,
         system: sysPrompt,
         messages: [{ role: 'user', content: userContent }]
       })
@@ -1950,22 +1968,46 @@ Campos:
 
 function setLoadingTxt(t){ const el=document.getElementById('scanner-loading-txt'); if(el) el.textContent=t; }
 
+// ── Renderizar texto con KaTeX ─────────
+function renderizarKaTeX(texto, contenedor){
+  // Convertir saltos de línea a <br> preservando bloques
+  const html = texto
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\n/g,'<br>');
+  contenedor.innerHTML = html;
+  // Renderizar KaTeX si está disponible
+  if(window.renderMathInElement){
+    try{
+      renderMathInElement(contenedor, {
+        delimiters:[
+          {left:'$$',right:'$$',display:true},
+          {left:'$',right:'$',display:false},
+          {left:'\\(',right:'\\)',display:false},
+          {left:'\\[',right:'\\]',display:true}
+        ],
+        throwOnError:false,
+        output:'html'
+      });
+    }catch(e){ console.warn('KaTeX error:',e); }
+  }
+}
+
 // ── Mostrar resultado ──────────────────
 window.mostrarResultado = function mostrarResultado(a){
-  const colores = {Física:'#3ecf8e',Matemática:'#6c63ff',Química:'#f97316',Otro:'#8b8fa8'};
+  const colores = {Física:'#3ecf8e',Matemática:'#6c63ff',Química:'#f97316',Ingeniería:'#3b82f6',Otro:'#8b8fa8'};
   const c = colores[a.materia]||'#6c63ff';
   const mb = document.getElementById('srm-materia-badge');
-  mb.textContent = a.materia; mb.style.background=c+'20'; mb.style.color=c; mb.style.borderColor=c+'40';
+  mb.textContent = a.materia||''; mb.style.background=c+'20'; mb.style.color=c; mb.style.borderColor=c+'40';
   document.getElementById('srm-nivel-badge').textContent = a.nivel||'';
   document.getElementById('srm-tema').textContent = a.tema||'';
   document.getElementById('srm-subtema').textContent = a.subtema||'';
-  document.getElementById('srm-explicacion').textContent = a.explicacion||'';
+  // Renderizar explicación con KaTeX
+  renderizarKaTeX(a.explicacion||'', document.getElementById('srm-explicacion'));
   const sw = document.getElementById('srm-solucion-wrap');
-  // Compatibilidad: Firestore guarda como tieneEjercicio, análisis fresco como tiene_ejercicio
   const tieneEj = a.tiene_ejercicio || a.tieneEjercicio || false;
   const sol = a.solucion || '';
   if(tieneEj && sol){
-    document.getElementById('srm-solucion').textContent = sol;
+    renderizarKaTeX(sol, document.getElementById('srm-solucion'));
     sw.style.display = 'block';
   } else { sw.style.display='none'; }
   document.getElementById('srm-modo-resultado').style.display='none';
@@ -1996,8 +2038,8 @@ window.modoScanner = async function modoScanner(modo){
   const res = document.getElementById('srm-modo-resultado');
   res.style.display='block'; res.textContent='⏳ Generando...';
   let prompt = '';
-  if(modo==='examen') prompt=`Basándote en el tema "${scannerAnalisis.tema}" de ${scannerAnalisis.materia}, genera 5 preguntas de opción múltiple de nivel universitario con sus respuestas correctas marcadas. Formato claro y numerado.`;
-  if(modo==='resumen') prompt=`Convierte en un resumen académico limpio y organizado el siguiente tema de ${scannerAnalisis.materia}: "${scannerAnalisis.tema} - ${scannerAnalisis.subtema}". Incluye definiciones, fórmulas clave y puntos importantes. Formato claro con secciones.`;
+  if(modo==='examen') prompt=`Basándote en el tema "${scannerAnalisis.tema}" de ${scannerAnalisis.materia}, genera 5 preguntas de opción múltiple de nivel universitario con sus respuestas correctas marcadas. Usa notación LaTeX para fórmulas: $formula$ para inline y $$formula$$ para display. Formato numerado y claro.`;
+  if(modo==='resumen') prompt=`Crea un resumen académico completo del tema "${scannerAnalisis.tema} - ${scannerAnalisis.subtema}" de ${scannerAnalisis.materia}. Incluye: definiciones clave, fórmulas importantes con notación LaTeX ($formula$ inline, $$formula$$ display), condiciones de aplicación y puntos esenciales. Organizado con secciones claras.`;
   if(modo==='dudas'){
     closeModal('scanner-result-modal');
     abrirChatScanner();
@@ -2016,8 +2058,7 @@ window.modoScanner = async function modoScanner(modo){
     const d = await r.json();
     if(d.error){ res.textContent = 'Error API: ' + d.error.message; return; }
     const txt = d.content?.[0]?.text || 'Sin respuesta';
-    res.textContent = txt;
-    res.style.whiteSpace = 'pre-wrap';
+    renderizarKaTeX(txt, res);
   }catch(e){ res.textContent='Error al conectar con la IA: ' + e.message; }
 }
 
