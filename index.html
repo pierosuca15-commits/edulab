@@ -1757,12 +1757,17 @@ function comprimirImagen(file){
     const img = new Image();
     const canvas = document.createElement('canvas');
     img.onload = ()=>{
-      const maxW = 1200;
-      const scale = Math.min(1, maxW/img.width);
-      canvas.width = img.width*scale;
-      canvas.height = img.height*scale;
-      canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
-      resolve(canvas.toDataURL('image/jpeg',0.72));
+      const maxW = 800;
+      const maxH = 800;
+      let w = img.width;
+      let h = img.height;
+      if(w > maxW){ h = Math.round(h*maxW/w); w = maxW; }
+      if(h > maxH){ w = Math.round(w*maxH/h); h = maxH; }
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(img.src);
+      resolve(canvas.toDataURL('image/jpeg',0.55));
     };
     img.src = URL.createObjectURL(file);
   });
