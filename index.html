@@ -1955,7 +1955,7 @@ function renderScannerAlumno(){
       </div>
       <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
         <button onclick="analizarFoto()" id="btn-analizar" style="padding:13px 10px;background:var(--accent);color:white;border:none;border-radius:12px;cursor:pointer;font-size:14px;font-weight:600;font-family:var(--sans);box-shadow:0 4px 16px var(--accent)40;touch-action:manipulation">🤖 Analizar con IA</button>
-        <button onclick="window.soloGuardarConIA()" id="btn-solo-guardar-direct" style="padding:13px 10px;background:#3ecf8e20;color:#3ecf8e;border:1px solid #3ecf8e50;border-radius:12px;cursor:pointer;font-size:14px;font-weight:600;font-family:var(--sans);touch-action:manipulation">💾 Solo guardar</button>
+        <button onclick="window.abrirGuardarFoto()" style="padding:13px 10px;background:#3ecf8e20;color:#3ecf8e;border:1px solid #3ecf8e50;border-radius:12px;cursor:pointer;font-size:14px;font-weight:600;font-family:var(--sans);touch-action:manipulation">💾 Solo guardar</button>
       </div>
       <div style="margin-top:8px">
         <button onclick="window.resetScanner()" style="width:100%;padding:11px;background:var(--bg3);color:var(--text2);border:1px solid var(--border2);border-radius:12px;cursor:pointer;font-size:14px;font-family:var(--sans);touch-action:manipulation">🔄 Cambiar imagen</button>
@@ -2319,105 +2319,100 @@ window.mostrarDuplicado = function mostrarDuplicado(d){
 // ══════════════════════════════════════════════
 // SOLO GUARDAR — guardar foto sin analizar con IA
 // ══════════════════════════════════════════════
-window.soloGuardarConIA = async function(){
+window.abrirGuardarFoto = function(){
   if(!scannerImagenBase64){ toast('Selecciona una imagen primero', true); return; }
-  const btn = document.getElementById('btn-solo-guardar-direct');
-  if(btn){ btn.disabled=true; btn.textContent='⏳ Verificando...'; }
+  const sel = document.getElementById('save-curso-sel');
+  sel.innerHTML = '<option value="">Selecciona un curso...</option>';
+  const visible = currentUser.role==='admin'
+    ? allCourses
+    : allCourses.filter(c=>(currentUser.courses||[]).includes(c.id));
+  visible.forEach(c=>{
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = (c.icon||'📁') + ' ' + (c.name||'');
+    sel.appendChild(opt);
+  });
+  document.getElementById('save-tema-sel').innerHTML = '<option value="">Primero selecciona un curso</option>';
+  document.getElementById('save-desc').value = '';
+  openModal('scanner-save-modal');
+};
 
+window.cargarTopicsSave = async function(courseId){
+  const sel = document.getElementById('save-tema-sel');
+  sel.innerHTML = '<option value="">Cargando...</option>';
+  if(!courseId){ sel.innerHTML = '<option value="">Primero selecciona un curso</option>'; return; }
   try{
-    // 1. Verificar duplicado por hash
+    let topics = allTopics[courseId];
+    if(!topics || !topics.length){
+      const snap = await getDocs(collection(db,`courses/${courseId}/topics`));
+      topics = [];
+      snap.forEach(d=>topics.push({id:d.id,...d.data()}));
+    }
+    sel.innerHTML = '<option value="">Selecciona un tema...</option>';
+    topics.sort((a,b)=>(a.order||0)-(b.order||0)).forEach(t=>{
+      const opt = document.createElement('option');
+      opt.value = t.id;
+      opt.textContent = (t.icon||'📄') + ' ' + (t.name||'');
+      sel.appendChild(opt);
+    });
+    if(!topics.length) sel.innerHTML = '<option value="">Sin temas en este curso</option>';
+  }catch(e){ sel.innerHTML = '<option value="">Error al cargar</option>'; }
+};
+
+window.ejecutarSoloGuardar = async function(){
+  const courseId = document.getElementById('save-curso-sel').value;
+  const topicId  = document.getElementById('save-tema-sel').value;
+  const desc     = document.getElementById('save-desc').value.trim();
+  const btn      = document.getElementById('btn-solo-guardar');
+  if(!courseId){ toast('Selecciona un curso', true); return; }
+  if(!topicId){  toast('Selecciona un tema', true); return; }
+  if(!scannerImagenBase64){ toast('No hay imagen', true); return; }
+  btn.disabled = true; btn.textContent = '⏳ Verificando imagen...';
+  try{
+    // ── Detección de duplicados por hash SHA-256 ──
     const hash = await calcularHash(scannerImagenBase64);
     const hashSnap = await getDoc(doc(db,'scanner_hashes',hash));
     if(hashSnap.exists()){
       const d = hashSnap.data();
-      toast('⚠️ Imagen ya guardada: ' + (d.materia||d.curso||'?') + ' — ' + (d.tema||'?'), true);
-      if(btn){ btn.disabled=false; btn.textContent='💾 Solo guardar'; }
+      toast('⚠️ Esta imagen ya fue guardada (Curso: ' + (d.curso||d.materia||'?') + ' — ' + (d.tema||'?') + ')', true);
+      btn.disabled = false; btn.textContent = '💾 Guardar foto';
       return;
     }
-
-    if(btn) btn.textContent='🤖 Analizando con IA...';
-
-    // 2. Claude detecta materia y tema
-    const sysPrompt = 'Eres un clasificador de apuntes universitarios. Responde SOLO con JSON valido, sin texto extra.';
-    const iaRes = await fetch(window.CLAUDE_URL, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5',
-        max_tokens: 400,
-        system: sysPrompt,
-        messages: [{role:'user', content:[
-          {type:'image', source:{type:'base64', media_type:'image/jpeg', data: scannerImagenBase64}},
-          {type:'text', text:'Analiza este apunte y responde SOLO con este JSON:
-{"materia":"Física","tema":"nombre del tema","subtema":"subtema especifico","nivel":"intermedio"}
-- materia: "Física", "Matemática", "Química" o "Ingeniería"
-- tema: tema principal identificado
-- subtema: concepto especifico
-- nivel: basico, intermedio o avanzado'}
-        ]}]
-      })
-    });
-    const iaData = await iaRes.json();
-    if(iaData.error) throw new Error('IA: ' + iaData.error.message);
-
-    let analisis = {materia:'Otro', tema:'Apunte', subtema:'', nivel:'intermedio'};
-    try{
-      const raw = iaData.content?.[0]?.text || '{}';
-      const limpio = raw.replace(/```json|```/g,'').trim();
-      const match = limpio.match(/\{[\s\S]*\}/);
-      if(match) analisis = {...analisis, ...JSON.parse(match[0])};
-    }catch(e){ console.warn('JSON parse:', e); }
-
-    // 3. Buscar curso más parecido en los cursos del alumno
-    if(btn) btn.textContent='⏳ Guardando...';
-    const visible = currentUser.role==='admin'
-      ? allCourses
-      : allCourses.filter(c=>(currentUser.courses||[]).includes(c.id));
-
-    // Buscar coincidencia por nombre de materia
-    const materiaIA = (analisis.materia||'').toLowerCase();
-    let cursoMatch = visible.find(c=>(c.name||'').toLowerCase().includes(materiaIA) || materiaIA.includes((c.name||'').toLowerCase()));
-    if(!cursoMatch) cursoMatch = visible[0]; // fallback: primer curso disponible
-
-    // 4. Subir imagen a Firebase Storage
+    btn.textContent = '⏳ Guardando...';
+    const curso = allCourses.find(c=>c.id===courseId);
+    // Cargar topics si no están en cache
+    if(!allTopics[courseId] || !allTopics[courseId].length){
+      const snap = await getDocs(collection(db,`courses/${courseId}/topics`));
+      allTopics[courseId] = [];
+      snap.forEach(d=>allTopics[courseId].push({id:d.id,...d.data()}));
+    }
+    const topic = allTopics[courseId].find(t=>t.id===topicId);
     const fname = `foto_${Date.now()}.jpg`;
-    const courseId = cursoMatch?.id || 'sin_curso';
-    const path = `scanner_fotos/${currentUser.id}/${courseId}/${fname}`;
-    const blob = await fetch('data:image/jpeg;base64,'+scannerImagenBase64).then(r=>r.blob());
-    const fRef = storageRef(storage, path);
+    const path  = `scanner_fotos/${currentUser.id}/${courseId}/${topicId}/${fname}`;
+    const blob  = await fetch('data:image/jpeg;base64,'+scannerImagenBase64).then(r=>r.blob());
+    const fRef  = storageRef(storage, path);
     await uploadBytes(fRef, blob);
     const fotoUrl = await getDownloadURL(fRef);
-
-    // 5. Guardar registro
     const registro = {
       alumnoId: currentUser.id, alumno: currentUser.name||'alumno',
-      fotoUrl, path, hash,
-      courseId, curso: cursoMatch?.name||'Sin curso',
-      materia: analisis.materia, tema: analisis.tema,
-      subtema: analisis.subtema, nivel: analisis.nivel,
-      tipo: 'solo_foto',
+      fotoUrl, path, hash, courseId, curso: curso?.name||'',
+      topicId, tema: topic?.name||'', descripcion: desc||'',
+      tipo: 'solo_foto', materia: curso?.name||'',
       fecha: new Date().toISOString(), createdAt: serverTimestamp()
     };
-
+    // Guardar hash para detección futura
     await setDoc(doc(db,'scanner_hashes',hash), registro);
+    // Guardar en historial del alumno
     await addDoc(collection(db,`scanner_historial/${currentUser.id}/fotos`), registro);
-    if(cursoMatch?.id){
-      await addDoc(collection(db,`courses/${cursoMatch.id}/fotos_alumnos`), registro);
-    }
-
-    toast('✅ Guardado — ' + analisis.materia + ': ' + analisis.tema);
+    // Guardar en el curso/tema para que el admin lo vea
+    await addDoc(collection(db,`courses/${courseId}/topics/${topicId}/fotos_alumnos`), registro);
+    toast('✅ Guardado en ' + (curso?.name||'') + ' — ' + (topic?.name||''));
+    closeModal('scanner-save-modal');
     window.resetScanner();
     cargarHistorialAlumno();
-
-  }catch(e){
-    toast('Error: ' + e.message, true);
-    console.error(e);
-  }
-  if(btn){ btn.disabled=false; btn.textContent='💾 Solo guardar'; }
+  }catch(e){ toast('Error: ' + e.message, true); console.error(e); }
+  btn.disabled = false; btn.textContent = '💾 Guardar foto';
 };
-// Aliases para compatibilidad
-window.abrirGuardarFoto = window.soloGuardarConIA;
-window.ejecutarSoloGuardar = window.soloGuardarConIA;
 
 // ── Modos extra ────────────────────────
 // Cache en memoria para no regenerar en la misma sesión
