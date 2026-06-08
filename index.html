@@ -846,10 +846,7 @@ body.mobile-layout .topic-grid{grid-template-columns:repeat(2,1fr)}
       <button onclick="closeModal('scanner-save-modal')" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text2);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px">✕</button>
     </div>
     <div style="padding:18px 20px">
-      <!-- Preview miniatura -->
-      <div style="text-align:center;margin-bottom:16px">
-        <img id="save-modal-preview" style="max-height:120px;border-radius:10px;border:1px solid var(--border2);object-fit:contain;background:var(--bg3)"/>
-      </div>
+      <!-- Sin preview — solo selectores -->
       <!-- Selector de curso -->
       <div style="margin-bottom:12px">
         <label style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px">Curso</label>
@@ -2324,8 +2321,6 @@ window.mostrarDuplicado = function mostrarDuplicado(d){
 // ══════════════════════════════════════════════
 window.abrirGuardarFoto = function(){
   if(!scannerImagenBase64){ toast('Selecciona una imagen primero', true); return; }
-  const prev = document.getElementById('save-modal-preview');
-  if(prev) prev.src = 'data:image/jpeg;base64,' + scannerImagenBase64;
   const sel = document.getElementById('save-curso-sel');
   sel.innerHTML = '<option value="">Selecciona un curso...</option>';
   const visible = currentUser.role==='admin'
@@ -2372,10 +2367,26 @@ window.ejecutarSoloGuardar = async function(){
   if(!courseId){ toast('Selecciona un curso', true); return; }
   if(!topicId){  toast('Selecciona un tema', true); return; }
   if(!scannerImagenBase64){ toast('No hay imagen', true); return; }
-  btn.disabled = true; btn.textContent = '⏳ Guardando...';
+  btn.disabled = true; btn.textContent = '⏳ Verificando imagen...';
   try{
+    // ── Detección de duplicados por hash SHA-256 ──
+    const hash = await calcularHash(scannerImagenBase64);
+    const hashSnap = await getDoc(doc(db,'scanner_hashes',hash));
+    if(hashSnap.exists()){
+      const d = hashSnap.data();
+      toast('⚠️ Esta imagen ya fue guardada (Curso: ' + (d.curso||d.materia||'?') + ' — ' + (d.tema||'?') + ')', true);
+      btn.disabled = false; btn.textContent = '💾 Guardar foto';
+      return;
+    }
+    btn.textContent = '⏳ Guardando...';
     const curso = allCourses.find(c=>c.id===courseId);
-    const topic = (allTopics[courseId]||[]).find(t=>t.id===topicId);
+    // Cargar topics si no están en cache
+    if(!allTopics[courseId] || !allTopics[courseId].length){
+      const snap = await getDocs(collection(db,`courses/${courseId}/topics`));
+      allTopics[courseId] = [];
+      snap.forEach(d=>allTopics[courseId].push({id:d.id,...d.data()}));
+    }
+    const topic = allTopics[courseId].find(t=>t.id===topicId);
     const fname = `foto_${Date.now()}.jpg`;
     const path  = `scanner_fotos/${currentUser.id}/${courseId}/${topicId}/${fname}`;
     const blob  = await fetch('data:image/jpeg;base64,'+scannerImagenBase64).then(r=>r.blob());
@@ -2384,14 +2395,18 @@ window.ejecutarSoloGuardar = async function(){
     const fotoUrl = await getDownloadURL(fRef);
     const registro = {
       alumnoId: currentUser.id, alumno: currentUser.name||'alumno',
-      fotoUrl, path, courseId, curso: curso?.name||'',
+      fotoUrl, path, hash, courseId, curso: curso?.name||'',
       topicId, tema: topic?.name||'', descripcion: desc||'',
-      tipo: 'solo_foto', materia: curso?.name||'', tema_display: topic?.name||'',
+      tipo: 'solo_foto', materia: curso?.name||'',
       fecha: new Date().toISOString(), createdAt: serverTimestamp()
     };
+    // Guardar hash para detección futura
+    await setDoc(doc(db,'scanner_hashes',hash), registro);
+    // Guardar en historial del alumno
     await addDoc(collection(db,`scanner_historial/${currentUser.id}/fotos`), registro);
+    // Guardar en el curso/tema para que el admin lo vea
     await addDoc(collection(db,`courses/${courseId}/topics/${topicId}/fotos_alumnos`), registro);
-    toast('✅ Foto guardada en ' + (curso?.name||'') + ' — ' + (topic?.name||''));
+    toast('✅ Guardado en ' + (curso?.name||'') + ' — ' + (topic?.name||''));
     closeModal('scanner-save-modal');
     window.resetScanner();
     cargarHistorialAlumno();
