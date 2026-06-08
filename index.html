@@ -915,8 +915,8 @@ const AUTO_CFG = {
   appId: "1:826536469130:web:b995b889bff0e13e678373"
 };
 
-// -- Gemini ------------------------------
-// -- Claude AI (via Vercel proxy) ----------
+// ── Gemini ──────────────────────────────
+// ── Claude AI (via Vercel proxy) ──────────
 // La API key está segura en Vercel - no se expone en el código
 const CLAUDE_URL = '/api/ai';
 window.CLAUDE_KEY = ''; // no necesaria, la maneja el servidor
@@ -1904,9 +1904,9 @@ window.guardarColorTopic=async()=>{
   }catch(e){ toast('Error: '+e.message,true); }
 };
 
-// =======================================
+// ═══════════════════════════════════════
 // SCANNER IA
-// =======================================
+// ═══════════════════════════════════════
 let scannerAnalisis = null;
 let scannerImagenBase64 = null;
 
@@ -1955,7 +1955,7 @@ function renderScannerAlumno(){
       </div>
       <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
         <button onclick="analizarFoto()" id="btn-analizar" style="padding:13px 10px;background:var(--accent);color:white;border:none;border-radius:12px;cursor:pointer;font-size:14px;font-weight:600;font-family:var(--sans);box-shadow:0 4px 16px var(--accent)40;touch-action:manipulation">🤖 Analizar con IA</button>
-        <button onclick="window.soloGuardarConIA(this)" style="padding:13px 10px;background:#3ecf8e20;color:#3ecf8e;border:1px solid #3ecf8e50;border-radius:12px;cursor:pointer;font-size:14px;font-weight:600;font-family:var(--sans);touch-action:manipulation">💾 Solo guardar</button>
+        <button onclick="window.abrirGuardarFoto()" style="padding:13px 10px;background:#3ecf8e20;color:#3ecf8e;border:1px solid #3ecf8e50;border-radius:12px;cursor:pointer;font-size:14px;font-weight:600;font-family:var(--sans);touch-action:manipulation">💾 Solo guardar</button>
       </div>
       <div style="margin-top:8px">
         <button onclick="window.resetScanner()" style="width:100%;padding:11px;background:var(--bg3);color:var(--text2);border:1px solid var(--border2);border-radius:12px;cursor:pointer;font-size:14px;font-family:var(--sans);touch-action:manipulation">🔄 Cambiar imagen</button>
@@ -1983,7 +1983,7 @@ function renderScannerAdmin(){
     <div id="scanner-historial-admin"></div>`;
 }
 
-// -- Manejo de archivo ------------------
+// ── Manejo de archivo ──────────────────
 function handleScannerDrop(e){
   e.preventDefault();
   document.getElementById('scanner-drop').style.borderColor='var(--border2)';
@@ -2053,7 +2053,7 @@ window.resetScanner = function resetScanner(){
     }, 50);
   }
 }
-// -- Comprimir imagen -------------------
+// ── Comprimir imagen ───────────────────
 function comprimirImagen(dataUrl){
   return new Promise((resolve,reject)=>{
     const img = new Image();
@@ -2075,14 +2075,14 @@ function comprimirImagen(dataUrl){
   });
 }
 
-// -- Hash SHA256 ------------------------
+// ── Hash SHA256 ────────────────────────
 async function calcularHash(b64){
   const bytes = Uint8Array.from(atob(b64),c=>c.charCodeAt(0));
   const buf = await crypto.subtle.digest('SHA-256',bytes);
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 
-// -- Analizar foto ----------------------
+// ── Analizar foto ──────────────────────
 window.analizarFoto = async function analizarFoto(){
   if(!scannerImagenBase64){ toast('Selecciona una imagen primero',true); return; }
   const btnA = document.getElementById('btn-analizar');
@@ -2201,7 +2201,7 @@ Reglas:
 
 function setLoadingTxt(t){ const el=document.getElementById('scanner-loading-txt'); if(el) el.textContent=t; }
 
-// -- Renderizar texto con KaTeX ---------
+// ── Renderizar texto con KaTeX ─────────
 function renderizarKaTeX(texto, contenedor){
   // Proteger bloques LaTeX antes de escapar HTML
   const placeholders = [];
@@ -2214,7 +2214,7 @@ function renderizarKaTeX(texto, contenedor){
   // Escapar HTML
   t = t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
-  // Markdown -> HTML
+  // Markdown → HTML
   // **negrita** (incluso con : al final)
   t = t.replace(/\*\*([^*]+?)\*\*/g,'<strong style="color:var(--text);font-weight:700">$1</strong>');
   // *cursiva*
@@ -2227,9 +2227,9 @@ function renderizarKaTeX(texto, contenedor){
   t = t.replace(/^[*\-]\s+(.+)$/gm,'<div style="padding:4px 0 4px 14px;border-left:2px solid var(--accent);margin:3px 0;color:var(--text)">$1</div>');
   // 1. item
   t = t.replace(/^(\d+)\.\s+(.+)$/gm,'<div style="padding:4px 0 4px 0;margin:4px 0;color:var(--text)"><span style="color:var(--accent);font-weight:700;margin-right:6px">$1.</span>$2</div>');
-  // \n\n -> espacio
+  // \n\n → espacio
   t = t.replace(/\n\n/g,'<div style="margin:6px 0"></div>');
-  // \n -> <br>
+  // \n → <br>
   t = t.replace(/\n/g,'<br>');
   // `code`
   t = t.replace(/`([^`]+?)`/g,'<code style="background:var(--bg4);padding:1px 6px;border-radius:4px;font-family:var(--mono);font-size:12px;color:var(--green)">$1</code>');
@@ -2257,7 +2257,7 @@ function renderizarKaTeX(texto, contenedor){
   }
 }
 
-// -- Mostrar resultado ------------------
+// ── Mostrar resultado ──────────────────
 window.mostrarResultado = function mostrarResultado(a){
   const colores = {Física:'#3ecf8e',Matemática:'#6c63ff',Química:'#f97316',Ingeniería:'#3b82f6',Otro:'#8b8fa8'};
   const c = colores[a.materia]||'#6c63ff';
@@ -2291,7 +2291,7 @@ window.mostrarDuplicado = function mostrarDuplicado(d){
         <span style="font-size:22px">⚠️</span>
         <div>
           <div style="font-size:14px;font-weight:700;color:#f59e0b">Imagen ya analizada anteriormente</div>
-          <div style="font-size:12px;color:var(--text2);margin-top:2px">Por <b>${d.alumno}</b> · ${d.fecha?.slice(0,10)||''} · <b>${d.materia}</b> -- ${d.tema}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">Por <b>${d.alumno}</b> · ${d.fecha?.slice(0,10)||''} · <b>${d.materia}</b> — ${d.tema}</div>
         </div>
       </div>
       <!-- Comparación de imágenes -->
@@ -2316,80 +2316,105 @@ window.mostrarDuplicado = function mostrarDuplicado(d){
   wrap.style.display = 'block';
 }
 
-// ==============================================
-// SOLO GUARDAR -- guardar foto sin analizar con IA
-// ==============================================
-window.soloGuardarConIA = async function(btnEl){
+// ══════════════════════════════════════════════
+// SOLO GUARDAR — guardar foto sin analizar con IA
+// ══════════════════════════════════════════════
+window.abrirGuardarFoto = function(){
   if(!scannerImagenBase64){ toast('Selecciona una imagen primero', true); return; }
-  const btn = btnEl || document.querySelector('[onclick*="soloGuardarConIA"]');
-  const origText = btn ? btn.textContent : '';
-  if(btn){ btn.disabled=true; btn.textContent='⏳ Verificando...'; }
+  const sel = document.getElementById('save-curso-sel');
+  sel.innerHTML = '<option value="">Selecciona un curso...</option>';
+  const visible = currentUser.role==='admin'
+    ? allCourses
+    : allCourses.filter(c=>(currentUser.courses||[]).includes(c.id));
+  visible.forEach(c=>{
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = (c.icon||'📁') + ' ' + (c.name||'');
+    sel.appendChild(opt);
+  });
+  document.getElementById('save-tema-sel').innerHTML = '<option value="">Primero selecciona un curso</option>';
+  document.getElementById('save-desc').value = '';
+  openModal('scanner-save-modal');
+};
+
+window.cargarTopicsSave = async function(courseId){
+  const sel = document.getElementById('save-tema-sel');
+  sel.innerHTML = '<option value="">Cargando...</option>';
+  if(!courseId){ sel.innerHTML = '<option value="">Primero selecciona un curso</option>'; return; }
   try{
-    // 1. Hash anti-duplicado
+    let topics = allTopics[courseId];
+    if(!topics || !topics.length){
+      const snap = await getDocs(collection(db,`courses/${courseId}/topics`));
+      topics = [];
+      snap.forEach(d=>topics.push({id:d.id,...d.data()}));
+    }
+    sel.innerHTML = '<option value="">Selecciona un tema...</option>';
+    topics.sort((a,b)=>(a.order||0)-(b.order||0)).forEach(t=>{
+      const opt = document.createElement('option');
+      opt.value = t.id;
+      opt.textContent = (t.icon||'📄') + ' ' + (t.name||'');
+      sel.appendChild(opt);
+    });
+    if(!topics.length) sel.innerHTML = '<option value="">Sin temas en este curso</option>';
+  }catch(e){ sel.innerHTML = '<option value="">Error al cargar</option>'; }
+};
+
+window.ejecutarSoloGuardar = async function(){
+  const courseId = document.getElementById('save-curso-sel').value;
+  const topicId  = document.getElementById('save-tema-sel').value;
+  const desc     = document.getElementById('save-desc').value.trim();
+  const btn      = document.getElementById('btn-solo-guardar');
+  if(!courseId){ toast('Selecciona un curso', true); return; }
+  if(!topicId){  toast('Selecciona un tema', true); return; }
+  if(!scannerImagenBase64){ toast('No hay imagen', true); return; }
+  btn.disabled = true; btn.textContent = '⏳ Verificando imagen...';
+  try{
+    // ── Detección de duplicados por hash SHA-256 ──
     const hash = await calcularHash(scannerImagenBase64);
     const hashSnap = await getDoc(doc(db,'scanner_hashes',hash));
     if(hashSnap.exists()){
       const d = hashSnap.data();
-      toast('⚠️ Ya guardada: ' + (d.materia||d.curso||'?') + ' -- ' + (d.tema||'?'), true);
-      if(btn){ btn.disabled=false; btn.textContent=origText; }
+      toast('⚠️ Esta imagen ya fue guardada (Curso: ' + (d.curso||d.materia||'?') + ' — ' + (d.tema||'?') + ')', true);
+      btn.disabled = false; btn.textContent = '💾 Guardar foto';
       return;
     }
-    // 2. Claude detecta materia y tema
-    if(btn) btn.textContent='🤖 Analizando...';
-    let analisis = {materia:'Otro', tema:'Apunte', subtema:'', nivel:'intermedio'};
-    try{
-      const iaRes = await fetch(window.CLAUDE_URL,{
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({
-          model:'claude-haiku-4-5', max_tokens:300,
-          system:'Eres un clasificador de apuntes universitarios. Responde SOLO con JSON valido sin texto extra.',
-          messages:[{role:'user', content:[
-            {type:'image', source:{type:'base64', media_type:'image/jpeg', data:scannerImagenBase64}},
-            {type:'text', text:'Analiza este apunte. Responde SOLO con JSON: {"materia":"Fisica","tema":"nombre","subtema":"subtema"}. materia: Fisica, Matematica, Quimica o Ingenieria.'};
-        const m = raw.replace(/```json|```/g,'').trim().match(/\{[\s\S]*\}/);
-        if(m) analisis = {...analisis, ...JSON.parse(m[0])};
-      }
-    }catch(e){ console.warn('IA parse:', e); }
-    // 3. Buscar curso que coincida con la materia detectada
-    if(btn) btn.textContent='⏳ Guardando...';
-    const visible = currentUser.role==='admin'
-      ? allCourses
-      : allCourses.filter(c=>(currentUser.courses||[]).includes(c.id));
-    const mat = (analisis.materia||'').toLowerCase();
-    let cursoMatch = visible.find(c=>{
-      const n = (c.name||'').toLowerCase();
-      return n.includes(mat) || mat.includes(n.split(' ')[0]);
-    }) || visible[0];
-    // 4. Subir imagen a Storage
-    const fname = 'foto_'+Date.now()+'.jpg';
-    const cid = cursoMatch?.id||'sin_curso';
-    const path = 'scanner_fotos/'+currentUser.id+'/'+cid+'/'+fname;
-    const blob = await fetch('data:image/jpeg;base64,'+scannerImagenBase64).then(r=>r.blob());
-    const fRef = storageRef(storage, path);
+    btn.textContent = '⏳ Guardando...';
+    const curso = allCourses.find(c=>c.id===courseId);
+    // Cargar topics si no están en cache
+    if(!allTopics[courseId] || !allTopics[courseId].length){
+      const snap = await getDocs(collection(db,`courses/${courseId}/topics`));
+      allTopics[courseId] = [];
+      snap.forEach(d=>allTopics[courseId].push({id:d.id,...d.data()}));
+    }
+    const topic = allTopics[courseId].find(t=>t.id===topicId);
+    const fname = `foto_${Date.now()}.jpg`;
+    const path  = `scanner_fotos/${currentUser.id}/${courseId}/${topicId}/${fname}`;
+    const blob  = await fetch('data:image/jpeg;base64,'+scannerImagenBase64).then(r=>r.blob());
+    const fRef  = storageRef(storage, path);
     await uploadBytes(fRef, blob);
     const fotoUrl = await getDownloadURL(fRef);
-    // 5. Guardar en Firestore
-    const reg = {
-      alumnoId:currentUser.id, alumno:currentUser.name||'alumno',
-      fotoUrl, path, hash,
-      courseId:cid, curso:cursoMatch?.name||'Sin curso',
-      materia:analisis.materia, tema:analisis.tema, subtema:analisis.subtema,
-      tipo:'solo_foto', fecha:new Date().toISOString(), createdAt:serverTimestamp()
+    const registro = {
+      alumnoId: currentUser.id, alumno: currentUser.name||'alumno',
+      fotoUrl, path, hash, courseId, curso: curso?.name||'',
+      topicId, tema: topic?.name||'', descripcion: desc||'',
+      tipo: 'solo_foto', materia: curso?.name||'',
+      fecha: new Date().toISOString(), createdAt: serverTimestamp()
     };
-    await setDoc(doc(db,'scanner_hashes',hash), reg);
-    await addDoc(collection(db,'scanner_historial/'+currentUser.id+'/fotos'), reg);
-    if(cursoMatch?.id) await addDoc(collection(db,'courses/'+cursoMatch.id+'/fotos_alumnos'), reg);
-    toast('✅ ' + analisis.materia + ': ' + analisis.tema);
+    // Guardar hash para detección futura
+    await setDoc(doc(db,'scanner_hashes',hash), registro);
+    // Guardar en historial del alumno
+    await addDoc(collection(db,`scanner_historial/${currentUser.id}/fotos`), registro);
+    // Guardar en el curso/tema para que el admin lo vea
+    await addDoc(collection(db,`courses/${courseId}/topics/${topicId}/fotos_alumnos`), registro);
+    toast('✅ Guardado en ' + (curso?.name||'') + ' — ' + (topic?.name||''));
+    closeModal('scanner-save-modal');
     window.resetScanner();
     cargarHistorialAlumno();
-  }catch(e){ toast('Error: '+e.message, true); console.error(e); }
-  if(btn){ btn.disabled=false; btn.textContent=origText; }
+  }catch(e){ toast('Error: ' + e.message, true); console.error(e); }
+  btn.disabled = false; btn.textContent = '💾 Guardar foto';
 };
-// Aliases por compatibilidad con el modal antiguo (ya no se usa pero evita errores)
-window.abrirGuardarFoto = window.soloGuardarConIA;
-window.ejecutarSoloGuardar = window.soloGuardarConIA;
 
-// -- Modos extra ------------------------
+// ── Modos extra ────────────────────────
 // Cache en memoria para no regenerar en la misma sesión
 const _modoCache = {};
 
@@ -2452,7 +2477,7 @@ window.modoScanner = async function modoScanner(modo){
   }catch(e){ res.textContent='Error: '+e.message; }
 }
 
-// -- Chat de dudas ----------------------
+// ── Chat de dudas ──────────────────────
 let scannerChatHistory = [];
 
 let _chatTemaActivo = null;
@@ -2556,7 +2581,7 @@ window.enviarChatScanner = async function enviarChatScanner(){
   inp.focus();
 }
 
-// -- Historial alumno -------------------
+// ── Historial alumno ───────────────────
 window.cargarHistorialAlumno = async function cargarHistorialAlumno(){
   const el = document.getElementById('scanner-historial-alumno');
   if(!el) return;
@@ -2594,7 +2619,7 @@ window.mostrarResultadoHistorial=(item)=>{
   mostrarResultado(item);
 };
 
-// -- Historial admin --------------------
+// ── Historial admin ────────────────────
 window.cargarHistorialScanner = async function cargarHistorialScanner(){
   const el = document.getElementById('scanner-historial-admin');
   if(!el) return;
