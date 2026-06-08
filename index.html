@@ -836,6 +836,50 @@ body.mobile-layout .topic-grid{grid-template-columns:repeat(2,1fr)}
 </div>
 
 <!-- MODAL DUDAS SCANNER -->
+<div class="modal" id="scanner-save-modal">
+  <div class="modal-box" style="max-width:420px;width:95vw;padding:0;overflow:hidden">
+    <div style="padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--text)">💾 Guardar imagen</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px">Elige dónde guardar esta foto</div>
+      </div>
+      <button onclick="closeModal('scanner-save-modal')" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text2);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px">✕</button>
+    </div>
+    <div style="padding:18px 20px">
+      <!-- Preview miniatura -->
+      <div style="text-align:center;margin-bottom:16px">
+        <img id="save-modal-preview" style="max-height:120px;border-radius:10px;border:1px solid var(--border2);object-fit:contain;background:var(--bg3)"/>
+      </div>
+      <!-- Selector de curso -->
+      <div style="margin-bottom:12px">
+        <label style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px">Curso</label>
+        <div style="position:relative">
+          <select id="save-curso-sel" onchange="window.cargarTopicsSave(this.value)" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:11px 14px;color:var(--text);font-size:14px;font-family:var(--sans);outline:none;appearance:none;cursor:pointer">
+            <option value="">Selecciona un curso...</option>
+          </select>
+          <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none;font-size:11px">▼</span>
+        </div>
+      </div>
+      <!-- Selector de tema -->
+      <div style="margin-bottom:16px">
+        <label style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px">Tema / Semana</label>
+        <div style="position:relative">
+          <select id="save-tema-sel" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:11px 14px;color:var(--text);font-size:14px;font-family:var(--sans);outline:none;appearance:none;cursor:pointer">
+            <option value="">Primero selecciona un curso</option>
+          </select>
+          <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none;font-size:11px">▼</span>
+        </div>
+      </div>
+      <!-- Descripción opcional -->
+      <div style="margin-bottom:16px">
+        <label style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px">Descripción (opcional)</label>
+        <input type="text" id="save-desc" placeholder="Ej: Apunte semana 3 — Torque" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:11px 14px;color:var(--text);font-size:14px;font-family:var(--sans);outline:none;box-sizing:border-box"/>
+      </div>
+      <button onclick="window.ejecutarSoloGuardar()" id="btn-solo-guardar" style="width:100%;padding:13px;background:#3ecf8e;color:white;border:none;border-radius:12px;cursor:pointer;font-size:15px;font-weight:600;font-family:var(--sans);touch-action:manipulation">💾 Guardar foto</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal" id="scanner-chat-modal">
   <div class="modal-box" style="max-width:560px;width:95vw;padding:0;overflow:hidden;display:flex;flex-direction:column;max-height:88vh">
     <div style="padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
@@ -1912,9 +1956,12 @@ function renderScannerAlumno(){
         <img id="scanner-preview-img" style="width:100%;max-height:340px;object-fit:contain;border-radius:14px;border:1px solid var(--border2);display:block;background:var(--bg3)"/>
         <button onclick="window.resetScanner()" title="Cambiar imagen" style="position:absolute;top:10px;right:10px;width:44px;height:44px;border-radius:50%;background:rgba(10,10,15,0.88);border:2px solid rgba(255,255,255,0.25);color:white;cursor:pointer;font-size:22px;line-height:44px;text-align:center;z-index:20;-webkit-tap-highlight-color:transparent;touch-action:manipulation">✕</button>
       </div>
-      <div style="margin-top:14px;display:flex;gap:10px">
-        <button onclick="analizarFoto()" id="btn-analizar" style="flex:1;padding:14px 20px;background:var(--accent);color:white;border:none;border-radius:12px;cursor:pointer;font-size:15px;font-weight:600;font-family:var(--sans);box-shadow:0 4px 20px var(--accent)40;touch-action:manipulation">🤖 Analizar con IA</button>
-        <button onclick="window.resetScanner()" style="padding:14px 16px;background:var(--bg3);color:var(--text2);border:1px solid var(--border2);border-radius:12px;cursor:pointer;font-size:20px;touch-action:manipulation" title="Cambiar imagen">🔄</button>
+      <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button onclick="analizarFoto()" id="btn-analizar" style="padding:13px 10px;background:var(--accent);color:white;border:none;border-radius:12px;cursor:pointer;font-size:14px;font-weight:600;font-family:var(--sans);box-shadow:0 4px 16px var(--accent)40;touch-action:manipulation">🤖 Analizar con IA</button>
+        <button onclick="window.abrirGuardarFoto()" style="padding:13px 10px;background:#3ecf8e20;color:#3ecf8e;border:1px solid #3ecf8e50;border-radius:12px;cursor:pointer;font-size:14px;font-weight:600;font-family:var(--sans);touch-action:manipulation">💾 Solo guardar</button>
+      </div>
+      <div style="margin-top:8px">
+        <button onclick="window.resetScanner()" style="width:100%;padding:11px;background:var(--bg3);color:var(--text2);border:1px solid var(--border2);border-radius:12px;cursor:pointer;font-size:14px;font-family:var(--sans);touch-action:manipulation">🔄 Cambiar imagen</button>
       </div>
     </div>
     <div id="scanner-loading" style="display:none;text-align:center;padding:24px">
@@ -2271,6 +2318,86 @@ window.mostrarDuplicado = function mostrarDuplicado(d){
   wrap.innerHTML = html;
   wrap.style.display = 'block';
 }
+
+// ══════════════════════════════════════════════
+// SOLO GUARDAR — guardar foto sin analizar con IA
+// ══════════════════════════════════════════════
+window.abrirGuardarFoto = function(){
+  if(!scannerImagenBase64){ toast('Selecciona una imagen primero', true); return; }
+  const prev = document.getElementById('save-modal-preview');
+  if(prev) prev.src = 'data:image/jpeg;base64,' + scannerImagenBase64;
+  const sel = document.getElementById('save-curso-sel');
+  sel.innerHTML = '<option value="">Selecciona un curso...</option>';
+  const visible = currentUser.role==='admin'
+    ? allCourses
+    : allCourses.filter(c=>(currentUser.courses||[]).includes(c.id));
+  visible.forEach(c=>{
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = (c.icon||'📁') + ' ' + (c.name||'');
+    sel.appendChild(opt);
+  });
+  document.getElementById('save-tema-sel').innerHTML = '<option value="">Primero selecciona un curso</option>';
+  document.getElementById('save-desc').value = '';
+  openModal('scanner-save-modal');
+};
+
+window.cargarTopicsSave = async function(courseId){
+  const sel = document.getElementById('save-tema-sel');
+  sel.innerHTML = '<option value="">Cargando...</option>';
+  if(!courseId){ sel.innerHTML = '<option value="">Primero selecciona un curso</option>'; return; }
+  try{
+    let topics = allTopics[courseId];
+    if(!topics || !topics.length){
+      const snap = await getDocs(collection(db,`courses/${courseId}/topics`));
+      topics = [];
+      snap.forEach(d=>topics.push({id:d.id,...d.data()}));
+    }
+    sel.innerHTML = '<option value="">Selecciona un tema...</option>';
+    topics.sort((a,b)=>(a.order||0)-(b.order||0)).forEach(t=>{
+      const opt = document.createElement('option');
+      opt.value = t.id;
+      opt.textContent = (t.icon||'📄') + ' ' + (t.name||'');
+      sel.appendChild(opt);
+    });
+    if(!topics.length) sel.innerHTML = '<option value="">Sin temas en este curso</option>';
+  }catch(e){ sel.innerHTML = '<option value="">Error al cargar</option>'; }
+};
+
+window.ejecutarSoloGuardar = async function(){
+  const courseId = document.getElementById('save-curso-sel').value;
+  const topicId  = document.getElementById('save-tema-sel').value;
+  const desc     = document.getElementById('save-desc').value.trim();
+  const btn      = document.getElementById('btn-solo-guardar');
+  if(!courseId){ toast('Selecciona un curso', true); return; }
+  if(!topicId){  toast('Selecciona un tema', true); return; }
+  if(!scannerImagenBase64){ toast('No hay imagen', true); return; }
+  btn.disabled = true; btn.textContent = '⏳ Guardando...';
+  try{
+    const curso = allCourses.find(c=>c.id===courseId);
+    const topic = (allTopics[courseId]||[]).find(t=>t.id===topicId);
+    const fname = `foto_${Date.now()}.jpg`;
+    const path  = `scanner_fotos/${currentUser.id}/${courseId}/${topicId}/${fname}`;
+    const blob  = await fetch('data:image/jpeg;base64,'+scannerImagenBase64).then(r=>r.blob());
+    const fRef  = storageRef(storage, path);
+    await uploadBytes(fRef, blob);
+    const fotoUrl = await getDownloadURL(fRef);
+    const registro = {
+      alumnoId: currentUser.id, alumno: currentUser.name||'alumno',
+      fotoUrl, path, courseId, curso: curso?.name||'',
+      topicId, tema: topic?.name||'', descripcion: desc||'',
+      tipo: 'solo_foto', materia: curso?.name||'', tema_display: topic?.name||'',
+      fecha: new Date().toISOString(), createdAt: serverTimestamp()
+    };
+    await addDoc(collection(db,`scanner_historial/${currentUser.id}/fotos`), registro);
+    await addDoc(collection(db,`courses/${courseId}/topics/${topicId}/fotos_alumnos`), registro);
+    toast('✅ Foto guardada en ' + (curso?.name||'') + ' — ' + (topic?.name||''));
+    closeModal('scanner-save-modal');
+    window.resetScanner();
+    cargarHistorialAlumno();
+  }catch(e){ toast('Error: ' + e.message, true); console.error(e); }
+  btn.disabled = false; btn.textContent = '💾 Guardar foto';
+};
 
 // ── Modos extra ────────────────────────
 // Cache en memoria para no regenerar en la misma sesión
