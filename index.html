@@ -2319,10 +2319,6 @@ window.mostrarDuplicado = function mostrarDuplicado(d){
 // ══════════════════════════════════════════════
 // SOLO GUARDAR — guardar foto sin analizar con IA
 // ══════════════════════════════════════════════
-// Funciones legacy (ya no se usan, reemplazadas por soloGuardarConIA)
-window.abrirGuardarFoto = window.soloGuardarConIA;
-window.ejecutarSoloGuardar = window.soloGuardarConIA;
-
 window.soloGuardarConIA = async function(){
   if(!scannerImagenBase64){ toast('Selecciona una imagen primero', true); return; }
   const btn = document.getElementById('btn-solo-guardar-direct');
@@ -2419,6 +2415,9 @@ window.soloGuardarConIA = async function(){
   }
   if(btn){ btn.disabled=false; btn.textContent='💾 Solo guardar'; }
 };
+// Aliases para compatibilidad
+window.abrirGuardarFoto = window.soloGuardarConIA;
+window.ejecutarSoloGuardar = window.soloGuardarConIA;
 
 // ── Modos extra ────────────────────────
 // Cache en memoria para no regenerar en la misma sesión
